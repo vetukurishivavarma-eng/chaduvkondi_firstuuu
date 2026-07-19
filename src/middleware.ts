@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const protectedPaths = ["/dashboard", "/quiz", "/admin", "/leaderboard"];
-const authPaths = ["/login", "/signup"];
+const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
