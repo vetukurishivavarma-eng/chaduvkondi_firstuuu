@@ -560,6 +560,147 @@ async function main() {
         },
       ],
     },
+    {
+      name: "Apex Testing",
+      description: "Test classes, code coverage, test methodologies, and mocking",
+      order: 8,
+      concepts: [
+        {
+          name: "Test Classes & Best Practices",
+          description: "Creating test classes, understanding code coverage, and testing patterns",
+          order: 1,
+          questions: [
+            {
+              text: "Which annotation is used to define a class as a test class in Apex?",
+              difficultyWeight: 1.0,
+              explanation: "The @isTest annotation marks a class as a test class. All methods within an @isTest class are considered test methods. Test classes don't count against your org's code size limit.",
+              choices: [
+                { text: "@isTest", isCorrect: true },
+                { text: "@testMethod", isCorrect: false },
+                { text: "@TestVisible", isCorrect: false },
+                { text: "@AuraEnabled", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the minimum code coverage required to deploy Apex to production?",
+              difficultyWeight: 1.3,
+              explanation: "You need at least 75% code coverage overall, and each class must have at least 75% coverage. In addition, every trigger must have some coverage. These requirements apply to production deployments only.",
+              choices: [
+                { text: "75% overall, 75% per class, every trigger tested", isCorrect: true },
+                { text: "90% overall coverage", isCorrect: false },
+                { text: "50% per class, 75% overall", isCorrect: false },
+                { text: "100% coverage for all classes", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the purpose of Test.startTest() and Test.stopTest() in Apex tests?",
+              difficultyWeight: 1.5,
+              explanation: "Test.startTest() resets governor limits for the code that follows, allowing you to test that your code runs within limits. Test.stopTest() forces any asynchronous code started after startTest() to execute synchronously.",
+              choices: [
+                { text: "Resets governor limits and forces async code to run synchronously", isCorrect: true },
+                { text: "Creates test data and rolls it back", isCorrect: false },
+                { text: "Enables debugging output for the test method", isCorrect: false },
+                { text: "Marks the beginning and end of a test suite", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Asynchronous Apex",
+      description: "Batch Apex, Queueable, Scheduled Apex, and Future methods",
+      order: 9,
+      concepts: [
+        {
+          name: "Batch, Queueable & Future Methods",
+          description: "Understanding asynchronous processing options in Salesforce",
+          order: 1,
+          questions: [
+            {
+              text: "Which interface must a class implement to be used as Batch Apex?",
+              difficultyWeight: 1.3,
+              explanation: "Database.Batchable<sObject> is the interface for Batch Apex. It requires three methods: start() (returns records to process), execute() (processes each batch), and finish() (post-processing). Each batch can process up to 200 records.",
+              choices: [
+                { text: "Database.Batchable<sObject>", isCorrect: true },
+                { text: "Queueable", isCorrect: false },
+                { text: "Schedulable", isCorrect: false },
+                { text: "BatchableInterface", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the maximum number of Queueable Apex jobs that can be chained in a single transaction?",
+              difficultyWeight: 1.5,
+              explanation: "You can chain up to 2 Queueable jobs in a single transaction (one parent, one child). With the latest updates, this has been expanded, but the safe limit is 2 chained jobs. Each job runs in its own transaction with fresh limits.",
+              choices: [
+                { text: "2 chained jobs (parent + 1 child)", isCorrect: true },
+                { text: "5 chained jobs", isCorrect: false },
+                { text: "Unlimited chaining", isCorrect: false },
+                { text: "Only 1 job at a time", isCorrect: false },
+              ],
+            },
+            {
+              text: "When should you use a @future annotation instead of a Queueable class?",
+              difficultyWeight: 1.2,
+              explanation: "Use @future methods for simple, fire-and-forget asynchronous operations like callouts. Queueable is preferred for more complex scenarios because it supports chaining, has a job ID you can track, and can contain complex types as parameters.",
+              choices: [
+                { text: "For simple fire-and-forget operations like callouts where you don't need tracking", isCorrect: true },
+                { text: "When you need to process more than 10 million records", isCorrect: false },
+                { text: "When you need to chain multiple jobs together", isCorrect: false },
+                { text: "For Scheduled Apex jobs that run daily", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "SOQL & SOSL",
+      description: "Salesforce Object Query Language, relationship queries, and search",
+      order: 10,
+      concepts: [
+        {
+          name: "SOQL Queries & Relationships",
+          description: "Writing efficient SOQL queries, traversing relationships, and SOSL search",
+          order: 1,
+          questions: [
+            {
+              text: "How do you query child records from a parent object using a relationship query in SOQL?",
+              difficultyWeight: 1.3,
+              explanation: "Use a subquery in the SELECT clause: SELECT Id, Name, (SELECT Id, Name FROM Contacts) FROM Account. The child relationship name (e.g., Contacts) is the plural of the child object's relationship name.",
+              choices: [
+                { text: "Using a subquery with the child relationship name in parentheses", isCorrect: true },
+                { text: "Using a JOIN clause similar to SQL", isCorrect: false },
+                { text: "Querying the child object with a WHERE parentId filter", isCorrect: false },
+                { text: "Using the __r relationship suffix in a WHERE clause", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the key difference between SOQL and SOSL?",
+              difficultyWeight: 1.0,
+              explanation: "SOQL (Salesforce Object Query Language) queries a single object at a time and returns record fields. SOSL (Salesforce Object Search Language) searches across multiple objects simultaneously and returns a list of sObjects grouped by object type.",
+              choices: [
+                { text: "SOQL queries one object, SOSL searches multiple objects", isCorrect: true },
+                { text: "SOQL is for inserts, SOSL is for queries", isCorrect: false },
+                { text: "SOSL can only be used in Apex, not in the REST API", isCorrect: false },
+                { text: "SOQL returns grouped results, SOSL returns flat results", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which SOQL clause is used to group records and apply aggregate functions like COUNT()?",
+              difficultyWeight: 1.5,
+              explanation: "GROUP BY is used to group records for aggregation. Use HAVING to filter grouped results. Common aggregate functions: COUNT(), SUM(), AVG(), MIN(), MAX(). Example: SELECT AccountId, COUNT(Id) FROM Contact GROUP BY AccountId HAVING COUNT(Id) > 5.",
+              choices: [
+                { text: "GROUP BY", isCorrect: true },
+                { text: "ORDER BY", isCorrect: false },
+                { text: "HAVING", isCorrect: false },
+                { text: "LIMIT", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ];
 
   for (const subDomainData of subDomainsData) {
@@ -632,6 +773,19 @@ async function main() {
         "Change Sets & Deployment": [
           { title: "Salesforce Deployment Options", description: "Overview of change sets, CLI, and CI/CD", url: "https://www.youtube.com/watch?v=0XKqZAS2kUh", type: "video" },
           { title: "Change Sets Documentation", description: "Official change sets deployment guide", url: "https://help.salesforce.com/s/articleView?id=sf.changesets.htm", type: "documentation" },
+        ],
+        "Test Classes & Best Practices": [
+          { title: "Apex Testing Best Practices", description: "Complete guide to writing effective Apex tests", url: "https://www.youtube.com/watch?v=1YQqZAS3kVi", type: "video" },
+          { title: "Apex Testing Documentation", description: "Official guide for Apex testing and code coverage", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing.htm", type: "documentation" },
+          { title: "Test.startTest() and Test.stopTest()", description: "Understanding governor limit reset in tests", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_utility_methods.htm", type: "documentation" },
+        ],
+        "Batch, Queueable & Future Methods": [
+          { title: "Asynchronous Apex Explained", description: "Deep dive into Batch, Queueable, Future, and Scheduled Apex", url: "https://www.youtube.com/watch?v=2ZQqZAS4kWj", type: "video" },
+          { title: "Async Apex Documentation", description: "Official guide for asynchronous Apex processing", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_async_overview.htm", type: "documentation" },
+        ],
+        "SOQL Queries & Relationships": [
+          { title: "SOQL and SOSL Tutorial", description: "Learn Salesforce query language fundamentals", url: "https://www.youtube.com/watch?v=3ZQqZAS5kXk", type: "video" },
+          { title: "SOQL & SOSL Reference", description: "Official SOQL and SOSL reference guide", url: "https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql.htm", type: "documentation" },
         ],
       };
 
