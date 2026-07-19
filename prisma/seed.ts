@@ -727,65 +727,65 @@ async function main() {
       const resourceTypes = ["video", "article", "documentation"] as const;
       const resourcesByConcept: Record<string, { title: string; description: string; url: string; type: typeof resourceTypes[number] }[]> = {
         "Salesforce Setup & Organization": [
-          { title: "Salesforce Org Types Explained", description: "Understanding different Salesforce org types and their use cases", url: "https://www.youtube.com/watch?v=5TQqMqQrYbA", type: "video" },
+          { title: "Salesforce Hulk - Getting Started with Salesforce", description: "Overview of Salesforce org types, setup, and developer edition", url: "https://www.youtube.com/watch?v=wYULDOJ7U0A", type: "video" },
           { title: "Salesforce Setup Guide", description: "Official guide for setting up your Salesforce organization", url: "https://help.salesforce.com/s/articleView?id=sf.admin_setup.htm", type: "documentation" },
         ],
         "Object & Field Management": [
-          { title: "Creating Custom Objects in Salesforce", description: "Step-by-step guide to creating custom objects and fields", url: "https://www.youtube.com/watch?v=KsXKqZAS2kU", type: "video" },
+          { title: "Custom Objects & Fields Best Practices", description: "Salesforce guide to creating custom objects, fields, and relationships", url: "https://help.salesforce.com/s/articleView?id=sf.custom_object_create.htm", type: "documentation" },
           { title: "Relationship Types Overview", description: "Understanding Lookup vs Master-Detail relationships", url: "https://help.salesforce.com/s/articleView?id=sf.relationships_considerations.htm", type: "documentation" },
         ],
         "Security & Sharing": [
-          { title: "Salesforce Security Model Explained", description: "Complete overview of the Salesforce security model", url: "https://www.youtube.com/watch?v=8XKqZAS2kUY", type: "video" },
-          { title: "OWD and Sharing Rules", description: "Deep dive into Organization-Wide Defaults and Sharing Rules", url: "https://help.salesforce.com/s/articleView?id=sf.security_sharing.htm", type: "documentation" },
+          { title: "Salesforce Hulk - Sharing Rules Tutorial", description: "Complete overview of sharing rules, OWD, and role hierarchy", url: "https://www.youtube.com/watch?v=HuQu9CPOcSc", type: "video" },
+          { title: "Salesforce Security Guide", description: "Official security architecture documentation", url: "https://help.salesforce.com/s/articleView?id=sf.security_sharing_architecture.htm", type: "documentation" },
         ],
         "Apex Basics & Syntax": [
-          { title: "Apex Fundamentals", description: "Introduction to Apex programming language basics", url: "https://www.youtube.com/watch?v=3XKqZAS2kUZ", type: "video" },
+          { title: "Salesforce Hulk - Apex Programming Basics", description: "Introduction to Apex programming language, data types, and collections", url: "https://www.youtube.com/watch?v=wYULDOJ7U0A", type: "video" },
           { title: "Apex Developer Guide", description: "Official Apex developer documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm", type: "documentation" },
         ],
         "Apex Governor Limits": [
-          { title: "Apex Governor Limits Deep Dive", description: "Understanding and working within governor limits", url: "https://www.youtube.com/watch?v=7XKqZAS2kUa", type: "video" },
+          { title: "Salesforce Hulk - Governor Limits Explained", description: "Understanding and working within Salesforce governor limits", url: "https://www.youtube.com/watch?v=x7Ij5BJ1jCE", type: "video" },
           { title: "Execution Governors and Limits", description: "Official documentation on Apex limits", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm", type: "documentation" },
         ],
         "Apex Triggers": [
-          { title: "Apex Triggers Best Practices", description: "Best practices for writing efficient and testable triggers", url: "https://www.youtube.com/watch?v=9XKqZAS2kUb", type: "video" },
-          { title: "Trigger Best Practices Guide", description: "Official guide for trigger development", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm", type: "documentation" },
+          { title: "Salesforce Hulk - Apex Triggers Tutorial", description: "Complete guide to writing Apex triggers", url: "https://www.youtube.com/watch?v=tCjBMPsrFio", type: "video" },
+          { title: "Apex Triggers Documentation", description: "Official guide for trigger development", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm", type: "documentation" },
         ],
         "LWC Component Basics": [
-          { title: "Introduction to Lightning Web Components", description: "Getting started with LWC development", url: "https://www.youtube.com/watch?v=2XKqZAS2kUc", type: "video" },
-          { title: "LWC Developer Guide", description: "Official Lightning Web Components documentation", url: "https://developer.salesforce.com/docs/platform/lwc/guide/", type: "documentation" },
+          { title: "Salesforce Troop - LWC Crash Course", description: "Complete Lightning Web Components crash course", url: "https://www.youtube.com/watch?v=IHezETiVWPo", type: "video" },
+          { title: "LWC Developer Guide", description: "Official Lightning Web Components documentation", url: "https://developer.salesforce.com/docs/platform/lwc/guide/get-started.html", type: "documentation" },
         ],
         "LWC Data Services": [
-          { title: "LWC Data Services and Wire Adapters", description: "Working with wire adapters and data in LWC", url: "https://www.youtube.com/watch?v=4XKqZAS2kUd", type: "video" },
-          { title: "Get Data with Wire Service", description: "Using wire adapters in Lightning Web Components", url: "https://developer.salesforce.com/docs/platform/lwc/guide/data-wire-service.htm", type: "documentation" },
+          { title: "LWC Data & Wire Service Documentation", description: "Official guide for the LWC wire service and data fetching patterns", url: "https://developer.salesforce.com/docs/platform/lwc/guide/data-wire-service-about.html", type: "documentation" },
+          { title: "Lightning Data Service Basics", description: "Understanding imperative Apex calls vs wire adapters in LWC", url: "https://developer.salesforce.com/docs/platform/lwc/guide/data-apex.html", type: "documentation" },
         ],
         "Flow Builder Basics": [
-          { title: "Salesforce Flow Builder Tutorial", description: "Complete guide to Flow Builder", url: "https://www.youtube.com/watch?v=6XKqZAS2kUe", type: "video" },
-          { title: "Flow Builder Documentation", description: "Official Flow Builder user guide", url: "https://help.salesforce.com/s/articleView?id=sf.flow.htm", type: "documentation" },
+          { title: "Flow Builder Documentation", description: "Official Flow Builder user guide covering screen flows, auto-launched flows, and record-triggered flows", url: "https://help.salesforce.com/s/articleView?id=platform.automate_flow_about.htm", type: "documentation" },
+          { title: "Flow Builder Trailhead Module", description: "Interactive learning path for Flow Builder", url: "https://trailhead.salesforce.com/content/learn/modules/flow_builder", type: "documentation" },
         ],
         "Schema Design": [
-          { title: "Data Modeling in Salesforce", description: "Best practices for data modeling", url: "https://www.youtube.com/watch?v=1XKqZAS2kUf", type: "video" },
-          { title: "Data Model Design Guide", description: "Official data modeling documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/data_model.htm", type: "documentation" },
+          { title: "Coding With The Force - Data Modeling Best Practices", description: "Best practices for data modeling in Salesforce", url: "https://www.youtube.com/watch?v=V1m5tiMFYlM", type: "video" },
+          { title: "Data Modeling on Trailhead", description: "Salesforce data modeling learning path", url: "https://trailhead.salesforce.com/content/learn/modules/data_modeling", type: "documentation" },
         ],
         "REST & SOAP APIs": [
-          { title: "Salesforce REST API Tutorial", description: "Working with REST API in Salesforce", url: "https://www.youtube.com/watch?v=8XKqZAS2kUg", type: "video" },
-          { title: "REST API Developer Guide", description: "Official REST API documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/", type: "documentation" },
+          { title: "Salesforce Troop - REST API Integration Tutorial", description: "Working with REST API in Salesforce", url: "https://www.youtube.com/watch?v=EeBL-8D3AQk", type: "video" },
+          { title: "REST API Developer Guide", description: "Official REST API documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.htm", type: "documentation" },
         ],
         "Change Sets & Deployment": [
-          { title: "Salesforce Deployment Options", description: "Overview of change sets, CLI, and CI/CD", url: "https://www.youtube.com/watch?v=0XKqZAS2kUh", type: "video" },
-          { title: "Change Sets Documentation", description: "Official change sets deployment guide", url: "https://help.salesforce.com/s/articleView?id=sf.changesets.htm", type: "documentation" },
+          { title: "Salesforce CLI & Source of Truth Guide", description: "Best practices for Salesforce deployment using CLI and version control", url: "https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm", type: "documentation" },
+          { title: "Change Sets Documentation", description: "Official change sets deployment guide", url: "https://help.salesforce.com/s/articleView?id=sf.changesets_about.htm", type: "documentation" },
         ],
         "Test Classes & Best Practices": [
-          { title: "Apex Testing Best Practices", description: "Complete guide to writing effective Apex tests", url: "https://www.youtube.com/watch?v=1YQqZAS3kVi", type: "video" },
+          { title: "Coding With The Force - Apex Testing Tutorial", description: "Complete guide to writing effective Apex tests", url: "https://www.youtube.com/watch?v=mLnUyxwkVGU", type: "video" },
           { title: "Apex Testing Documentation", description: "Official guide for Apex testing and code coverage", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing.htm", type: "documentation" },
           { title: "Test.startTest() and Test.stopTest()", description: "Understanding governor limit reset in tests", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_utility_methods.htm", type: "documentation" },
         ],
         "Batch, Queueable & Future Methods": [
-          { title: "Asynchronous Apex Explained", description: "Deep dive into Batch, Queueable, Future, and Scheduled Apex", url: "https://www.youtube.com/watch?v=2ZQqZAS4kWj", type: "video" },
-          { title: "Async Apex Documentation", description: "Official guide for asynchronous Apex processing", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_async_overview.htm", type: "documentation" },
+          { title: "Coding With The Force - Batch Apex Deep Dive", description: "Deep dive into Batch, Queueable, Future, and Scheduled Apex", url: "https://www.youtube.com/watch?v=2BloKlbxY8U", type: "video" },
+          { title: "Asynchronous Apex Documentation", description: "Official guide for asynchronous Apex processing", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_async_overview.htm", type: "documentation" },
         ],
         "SOQL Queries & Relationships": [
-          { title: "SOQL and SOSL Tutorial", description: "Learn Salesforce query language fundamentals", url: "https://www.youtube.com/watch?v=3ZQqZAS5kXk", type: "video" },
-          { title: "SOQL & SOSL Reference", description: "Official SOQL and SOSL reference guide", url: "https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql.htm", type: "documentation" },
+          { title: "Coding With The Force - The Complete Guide to SOQL", description: "Learn Salesforce query language fundamentals including relationships", url: "https://www.youtube.com/watch?v=V1m5tiMFYlM", type: "video" },
+          { title: "SOQL and SOSL Reference", description: "Official SOQL and SOSL reference guide", url: "https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_sosl_intro.htm", type: "documentation" },
         ],
       };
 
