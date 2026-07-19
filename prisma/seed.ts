@@ -1,0 +1,690 @@
+import { PrismaClient } from "@prisma/client";
+
+// Load environment variables
+import "dotenv/config";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log("🌱 Seeding database...");
+
+  // Clean existing data
+  await prisma.spacedRepetition.deleteMany();
+  await prisma.leaderboardSnapshot.deleteMany();
+  await prisma.masteryScore.deleteMany();
+  await prisma.answerLog.deleteMany();
+  await prisma.quizAttempt.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.choice.deleteMany();
+  await prisma.question.deleteMany();
+  await prisma.concept.deleteMany();
+  await prisma.subDomain.deleteMany();
+  await prisma.track.deleteMany();
+  await prisma.tierDefinition.deleteMany();
+  await prisma.user.deleteMany();
+
+  // Create Tiers
+  const tiers = await Promise.all([
+    prisma.tierDefinition.create({
+      data: { name: "Spark", minScore: 0, color: "#94a3b8", icon: "✨" },
+    }),
+    prisma.tierDefinition.create({
+      data: { name: "Apprentice", minScore: 20, color: "#22c55e", icon: "🔥" },
+    }),
+    prisma.tierDefinition.create({
+      data: { name: "Specialist", minScore: 40, color: "#3b82f6", icon: "💎" },
+    }),
+    prisma.tierDefinition.create({
+      data: { name: "Expert", minScore: 60, color: "#8b5cf6", icon: "🏆" },
+    }),
+    prisma.tierDefinition.create({
+      data: { name: "Architect", minScore: 80, color: "#f59e0b", icon: "👑" },
+    }),
+    prisma.tierDefinition.create({
+      data: { name: "Elite", minScore: 95, color: "#ef4444", icon: "🌟" },
+    }),
+  ]);
+  console.log(`✅ Created ${tiers.length} tiers`);
+
+  // Create Admin User
+  const adminUser = await prisma.user.create({
+    data: {
+      email: "admin@chaduvkondi.com",
+      password: "$2a$10$8K1p/a0dL1LXMIgoEDFrwOfMQkfAjkMBcGmEGvFx0F5YL.GxG6KqO", // Admin@123
+      name: "Platform Admin",
+      role: "admin",
+      tierId: tiers[5].id, // Elite
+    },
+  });
+  console.log(`✅ Created admin user: ${adminUser.email}`);
+
+  // Create Salesforce Track
+  const salesforceTrack = await prisma.track.create({
+    data: {
+      name: "Salesforce Developer",
+      description: "Master Salesforce development from zero to expert — covering Apex, LWC, Flow, Data Modeling, Security, Integration, and DevOps fundamentals.",
+      icon: "☁️",
+      color: "#00a1e0",
+    },
+  });
+  console.log(`✅ Created track: ${salesforceTrack.name}`);
+
+  // Create Sub-Domains with Concepts and Questions
+  const subDomainsData = [
+    {
+      name: "Admin & Configuration",
+      description: "Salesforce administration, setup, and platform configuration",
+      order: 1,
+      concepts: [
+        {
+          name: "Salesforce Setup & Organization",
+          description: "Org setup, company information, fiscal year, and organization-wide defaults",
+          order: 1,
+          questions: [
+            {
+              text: "What is the maximum number of active users allowed in a Developer Edition org?",
+              difficultyWeight: 1.0,
+              explanation: "Developer Edition orgs support up to 5 active users. This is a significant limitation compared to Enterprise Edition which supports unlimited users.",
+              choices: [
+                { text: "5", isCorrect: true },
+                { text: "10", isCorrect: false },
+                { text: "25", isCorrect: false },
+                { text: "Unlimited", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which statement about Salesforce org types is correct?",
+              difficultyWeight: 1.2,
+              explanation: "Sandbox orgs are copies of your production org used for development and testing. They are not separate organizations — they are isolated environments within your production instance.",
+              choices: [
+                { text: "Sandbox is a complete copy of your production org for development and testing", isCorrect: true },
+                { text: "Developer Sandbox includes all production data", isCorrect: false },
+                { text: "Full Sandbox can only be refreshed once per year", isCorrect: false },
+                { text: "Sandbox orgs can be used as production orgs", isCorrect: false },
+              ],
+            },
+            {
+              text: "How many different profiles can you have in a single Salesforce org?",
+              difficultyWeight: 1.5,
+              explanation: "Salesforce supports up to 1,500 profiles per org. Profiles control object-level and field-level security, and each user is assigned exactly one profile.",
+              choices: [
+                { text: "Up to 1,500 profiles", isCorrect: true },
+                { text: "Up to 100 profiles", isCorrect: false },
+                { text: "Up to 500 profiles", isCorrect: false },
+                { text: "Unlimited profiles", isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Object & Field Management",
+          description: "Creating and managing custom objects, fields, and relationships",
+          order: 2,
+          questions: [
+            {
+              text: "Which relationship type creates a lookup field on the child object that can be blank (optional)?",
+              difficultyWeight: 1.0,
+              explanation: "A Lookup relationship creates a field on the child object, and the lookup can be optional (not required). Unlike Master-Detail, it doesn't cascade delete or enforce parent existence.",
+              choices: [
+                { text: "Lookup Relationship", isCorrect: true },
+                { text: "Master-Detail Relationship", isCorrect: false },
+                { text: "Many-to-Many Relationship", isCorrect: false },
+                { text: "Self Relationship", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the maximum number of custom objects you can create in Enterprise Edition?",
+              difficultyWeight: 1.3,
+              explanation: "Enterprise Edition allows up to 200 custom objects. Different editions have different limits: Developer Edition (200), Professional (50), Unlimited (2,000).",
+              choices: [
+                { text: "200", isCorrect: true },
+                { text: "50", isCorrect: false },
+                { text: "500", isCorrect: false },
+                { text: "Unlimited", isCorrect: false },
+              ],
+            },
+            {
+              text: "A Master-Detail relationship has which of the following characteristics?",
+              difficultyWeight: 1.5,
+              explanation: "Master-Detail relationships have cascade delete (when master is deleted, details are deleted), the detail inherits the master's sharing/security, and the detail record's owner is always the master's owner.",
+              choices: [
+                { text: "Cascade delete, inherited security, and owner from master", isCorrect: true },
+                { text: "Independent delete, separate ownership, optional parent", isCorrect: false },
+                { text: "Cross-object formula fields not supported", isCorrect: false },
+                { text: "Children can have different owners than parent", isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Security & Sharing",
+          description: "Profiles, permission sets, sharing rules, OWD, and role hierarchy",
+          order: 3,
+          questions: [
+            {
+              text: "What is the correct order of security evaluation in Salesforce?",
+              difficultyWeight: 1.5,
+              explanation: "Salesforce evaluates security top-down: Organization level → Object level (Profiles/Permission Sets) → Field level (Profiles/Permission Sets) → Record level (OWD → Role Hierarchy → Sharing Rules → Manual Sharing).",
+              choices: [
+                { text: "Org → Object → Field → Record", isCorrect: true },
+                { text: "Object → Field → Record → Org", isCorrect: false },
+                { text: "Record → Field → Object → Org", isCorrect: false },
+                { text: "Field → Org → Object → Record", isCorrect: false },
+              ],
+            },
+            {
+              text: "What happens when you set Organization-Wide Defaults (OWD) to Private for an object?",
+              difficultyWeight: 1.2,
+              explanation: "Private OWD means users can only access records they own or records shared with them via sharing rules, role hierarchy, or manual sharing. No other users can see records by default.",
+              choices: [
+                { text: "Users only see records they own or that are explicitly shared", isCorrect: true },
+                { text: "All users can see all records", isCorrect: false },
+                { text: "Only admins can see all records", isCorrect: false },
+                { text: "Records are automatically shared up the role hierarchy", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which feature allows granting access to records based on field values?",
+              difficultyWeight: 1.8,
+              explanation: "Criteria-Based Sharing Rules automatically share records to users/groups when specified criteria (field values) are met. This is different from Owner-Based Sharing Rules which share records based on the record owner.",
+              choices: [
+                { text: "Criteria-Based Sharing Rules", isCorrect: true },
+                { text: "Role Hierarchy", isCorrect: false },
+                { text: "Manual Sharing", isCorrect: false },
+                { text: "Permission Sets", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Apex Programming",
+      description: "Apex language fundamentals, governor limits, triggers, and best practices",
+      order: 2,
+      concepts: [
+        {
+          name: "Apex Basics & Syntax",
+          description: "Apex language fundamentals, data types, collections, and control flow",
+          order: 1,
+          questions: [
+            {
+              text: "Which of the following is NOT a valid Apex primitive data type?",
+              difficultyWeight: 1.0,
+              explanation: "'char' is not a valid Apex primitive. Apex primitives include Integer, Long, Double, Decimal, String, Boolean, Date, Datetime, Time, ID, and Blob.",
+              choices: [
+                { text: "char", isCorrect: true },
+                { text: "Integer", isCorrect: false },
+                { text: "Decimal", isCorrect: false },
+                { text: "Boolean", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the maximum number of SOQL queries that can be executed in a single Apex transaction?",
+              difficultyWeight: 1.3,
+              explanation: "The synchronous SOQL query limit is 100 queries per transaction. There's a separate limit of 200 queries for asynchronous transactions (Batch Apex, Queueable, Scheduled).",
+              choices: [
+                { text: "100", isCorrect: true },
+                { text: "50", isCorrect: false },
+                { text: "200", isCorrect: false },
+                { text: "150", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which Apex collection type maintains insertion order and allows duplicate values?",
+              difficultyWeight: 1.2,
+              explanation: "A List maintains insertion order and allows duplicates. A Set has no guaranteed order and no duplicates. A Map has key-value pairs where keys are unique.",
+              choices: [
+                { text: "List", isCorrect: true },
+                { text: "Set", isCorrect: false },
+                { text: "Map", isCorrect: false },
+                { text: "Array", isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Apex Governor Limits",
+          description: "Understanding and working within Salesforce governor limits",
+          order: 2,
+          questions: [
+            {
+              text: "What is the maximum CPU time allowed for a synchronous Apex transaction?",
+              difficultyWeight: 1.5,
+              explanation: "Synchronous Apex transactions have a 10-second CPU time limit. Asynchronous transactions have a 60-second CPU time limit. Exceeding this throws a LimitException.",
+              choices: [
+                { text: "10,000 milliseconds (10 seconds)", isCorrect: true },
+                { text: "30,000 milliseconds (30 seconds)", isCorrect: false },
+                { text: "60,000 milliseconds (60 seconds)", isCorrect: false },
+                { text: "5,000 milliseconds (5 seconds)", isCorrect: false },
+              ],
+            },
+            {
+              text: "How many records can be processed in a single DML operation?",
+              difficultyWeight: 1.3,
+              explanation: "The DML limit is 10,000 records per transaction, regardless of whether you use one DML call with many records or many DML calls with fewer records. That means you can update a maximum of 10,000 records total in one transaction.",
+              choices: [
+                { text: "10,000 records total per transaction", isCorrect: true },
+                { text: "10,000 records per DML statement", isCorrect: false },
+                { text: "50,000 records per transaction", isCorrect: false },
+                { text: "Unlimited record operations", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the heap size limit for synchronous Apex?",
+              difficultyWeight: 1.2,
+              explanation: "The heap size limit is 6 MB for synchronous Apex and 12 MB for asynchronous Apex. This includes all class variables, collections, and objects in memory at any point during execution.",
+              choices: [
+                { text: "6 MB", isCorrect: true },
+                { text: "12 MB", isCorrect: false },
+                { text: "3 MB", isCorrect: false },
+                { text: "10 MB", isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Apex Triggers",
+          description: "Trigger events, best practices, and trigger frameworks",
+          order: 3,
+          questions: [
+            {
+              text: "Which trigger events are supported in Salesforce?",
+              difficultyWeight: 1.0,
+              explanation: "Triggers support both before/after events for insert, update, delete, and undelete operations. Before triggers are used for validation and field updates, after triggers for related record changes.",
+              choices: [
+                { text: "before/after insert, update, delete, undelete", isCorrect: true },
+                { text: "before/after insert, update, delete only", isCorrect: false },
+                { text: "before/after insert only", isCorrect: false },
+                { text: "before/after insert, update, delete, upsert, undelete", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is a best practice for writing Apex triggers?",
+              difficultyWeight: 1.5,
+              explanation: "The best practice is to keep triggers as logic-free entry points that delegate all processing to a handler class. This follows the single-responsibility principle and makes code testable and maintainable.",
+              choices: [
+                { text: "Delegate all logic to a handler class, keep triggers logic-free", isCorrect: true },
+                { text: "Write all business logic directly in the trigger body", isCorrect: false },
+                { text: "Use multiple triggers per object for different operations", isCorrect: false },
+                { text: "Avoid using Trigger.old and Trigger.new maps", isCorrect: false },
+              ],
+            },
+            {
+              text: "What does Trigger.old contain in an after update trigger?",
+              difficultyWeight: 1.3,
+              explanation: "Trigger.old contains the old versions of records (before the update) as a Map. Trigger.new contains the new versions. You can compare them to detect field value changes.",
+              choices: [
+                { text: "The old field values of records before the update", isCorrect: true },
+                { text: "The new field values of records after the update", isCorrect: false },
+                { text: "Only the IDs of the records being updated", isCorrect: false },
+                { text: "All records in the database of that object", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Lightning Web Components",
+      description: "LWC framework, components, data binding, and lifecycle",
+      order: 3,
+      concepts: [
+        {
+          name: "LWC Component Basics",
+          description: "Component structure, templates, decorators, and lifecycle hooks",
+          order: 1,
+          questions: [
+            {
+              text: "Which file is required for every Lightning Web Component?",
+              difficultyWeight: 1.0,
+              explanation: "Every LWC must have an HTML template file (.html) and a JavaScript file (.js). The CSS file (.css), SVG icon, and test files are optional. The component folder can also include an XML configuration file.",
+              choices: [
+                { text: ".html template and .js file", isCorrect: true },
+                { text: ".html, .js, and .css files", isCorrect: false },
+                { text: "Only the .js file", isCorrect: false },
+                { text: ".html, .js, .css, and .svg files", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which decorator is used to make a class property reactive in LWC?",
+              difficultyWeight: 1.2,
+              explanation: "@track is used to make a private property reactive — when its value changes, the component re-renders. @api is for public properties/methods (accessible from parent components).",
+              choices: [
+                { text: "@track", isCorrect: true },
+                { text: "@api", isCorrect: false },
+                { text: "@wire", isCorrect: false },
+                { text: "@reactive", isCorrect: false },
+              ],
+            },
+            {
+              text: "How do you pass data from a parent component to a child component in LWC?",
+              difficultyWeight: 1.3,
+              explanation: "Use @api decorator on the child property and pass it via HTML attribute in the parent template. Example: <c-child item={record}></c-child> with @api item in the child component.",
+              choices: [
+                { text: "Using @api decorator on the child property and passing via HTML attribute", isCorrect: true },
+                { text: "Using window.sessionStorage to share data", isCorrect: false },
+                { text: "Using the @track decorator on the parent property", isCorrect: false },
+                { text: "Using global variables in JavaScript", isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          name: "LWC Data Services",
+          description: "Wire adapters, imperative Apex calls, and data handling",
+          order: 2,
+          questions: [
+            {
+              text: "Which wire adapter is used to retrieve a single record by ID in LWC?",
+              difficultyWeight: 1.5,
+              explanation: "getRecord is the wire adapter to retrieve a single record with specified fields. getRecords for multiple records, getRecordCreateDefaults for default field values on create.",
+              choices: [
+                { text: "getRecord", isCorrect: true },
+                { text: "getRecords", isCorrect: false },
+                { text: "getRecordById", isCorrect: false },
+                { text: "fetchRecord", isCorrect: false },
+              ],
+            },
+            {
+              text: "What happens when an @wire method returns an error?",
+              difficultyWeight: 1.3,
+              explanation: "When an @wire service returns an error, the data property is undefined and the error property contains the error object. You should always check for errors in the wired property before using data.",
+              choices: [
+                { text: "The data property is undefined and error property contains details", isCorrect: true },
+                { text: "The component crashes and shows an error overlay", isCorrect: false },
+                { text: "The wire method retries automatically", isCorrect: false },
+                { text: "The error is silently ignored and data is empty", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Flow & Automation",
+      description: "Flow Builder, Process Builder (legacy), and approval processes",
+      order: 4,
+      concepts: [
+        {
+          name: "Flow Builder Basics",
+          description: "Screen flows, auto-launched flows, record-triggered flows",
+          order: 1,
+          questions: [
+            {
+              text: "Which flow type can be triggered before a record is saved to the database?",
+              difficultyWeight: 1.2,
+              explanation: "Record-Triggered Flows can be configured to run 'Before the record is saved' (before-save). This is useful for updating field values or validating data before commit. After-save triggers run after commit.",
+              choices: [
+                { text: "Record-Triggered Flow (before-save)", isCorrect: true },
+                { text: "Auto-Launched Flow", isCorrect: false },
+                { text: "Screen Flow", isCorrect: false },
+                { text: "Platform Event-Triggered Flow", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the maximum number of flow interviews that can run concurrently per org?",
+              difficultyWeight: 1.5,
+              explanation: "The limit is 200,000 active flow interviews per org per 24-hour period for production orgs. For paused interviews (wait elements), there's a separate limit of 10,000 paused interviews per org.",
+              choices: [
+                { text: "200,000 per 24-hour period", isCorrect: true },
+                { text: "50,000 per hour", isCorrect: false },
+                { text: "1,000,000 per 24-hour period", isCorrect: false },
+                { text: "Unlimited", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which element type pauses the flow interview until a specified condition is met?",
+              difficultyWeight: 1.3,
+              explanation: "The Wait element pauses a flow interview until a specific time, date, or platform event occurs. It's commonly used in record-triggered flows to wait for related records or time-based conditions.",
+              choices: [
+                { text: "Wait Element", isCorrect: true },
+                { text: "Pause Element", isCorrect: false },
+                { text: "Scheduled Path", isCorrect: false },
+                { text: "Sleep Element", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Data Modeling",
+      description: "Data modeling best practices, schema builder, and data management",
+      order: 5,
+      concepts: [
+        {
+          name: "Schema Design",
+          description: "Entity relationships, data model optimization, and naming conventions",
+          order: 1,
+          questions: [
+            {
+              text: "What is a Junction Object used for in Salesforce?",
+              difficultyWeight: 1.0,
+              explanation: "A Junction Object creates a many-to-many relationship between two objects. It contains two Master-Detail relationships pointing to each object. Example: OpportunityLineItem connects Opportunity and Product.",
+              choices: [
+                { text: "Creating a many-to-many relationship between two objects", isCorrect: true },
+                { text: "Storing temporary data during calculations", isCorrect: false },
+                { text: "Joining two fields on the same object", isCorrect: false },
+                { text: "Connecting external databases to Salesforce", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the maximum number of custom fields per object in Salesforce?",
+              difficultyWeight: 1.3,
+              explanation: "The standard limit is 800 custom fields per object. However, this can vary based on the number of other custom components (formula fields, validation rules, etc.) consuming field capacity.",
+              choices: [
+                { text: "800", isCorrect: true },
+                { text: "500", isCorrect: false },
+                { text: "1,000", isCorrect: false },
+                { text: "300", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Integration & APIs",
+      description: "REST API, SOAP API, connected apps, and external services",
+      order: 6,
+      concepts: [
+        {
+          name: "REST & SOAP APIs",
+          description: "Salesforce Web services API fundamentals",
+          order: 1,
+          questions: [
+            {
+              text: "Which HTTP method is used to update an existing record via the Salesforce REST API?",
+              difficultyWeight: 1.0,
+              explanation: "PATCH is used to update existing records via REST API. POST is for creating records (or upsert), GET is for retrieving, and DELETE is for deleting records.",
+              choices: [
+                { text: "PATCH", isCorrect: true },
+                { text: "POST", isCorrect: false },
+                { text: "PUT", isCorrect: false },
+                { text: "UPDATE", isCorrect: false },
+              ],
+            },
+            {
+              text: "What is the daily API request limit for Enterprise Edition?",
+              difficultyWeight: 1.5,
+              explanation: "Enterprise Edition has a limit of 100,000 API requests per license type per 24-hour period. Different editions have different limits: Developer (15,000), Professional (50,000), Unlimited (200,000+).",
+              choices: [
+                { text: "100,000 per license type per 24 hours", isCorrect: true },
+                { text: "50,000 per day total", isCorrect: false },
+                { text: "Unlimited API requests", isCorrect: false },
+                { text: "500,000 per 24 hours", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Deployment & DevOps",
+      description: "Change sets, Salesforce CLI, CI/CD, and version control",
+      order: 7,
+      concepts: [
+        {
+          name: "Change Sets & Deployment",
+          description: "Outbound/inbound change sets, deployment connections, and metadata API",
+          order: 1,
+          questions: [
+            {
+              text: "What is the direction of an Outbound Change Set?",
+              difficultyWeight: 1.0,
+              explanation: "Outbound Change Sets move components FROM the source org TO another org. Inbound Change Sets receive components FROM another org. Deployment connections must be established between the two orgs first.",
+              choices: [
+                { text: "Moves components from source org to target org", isCorrect: true },
+                { text: "Moves components from target org to source org", isCorrect: false },
+                { text: "Uploads components to AppExchange", isCorrect: false },
+                { text: "Deletes components from the source org", isCorrect: false },
+              ],
+            },
+            {
+              text: "Which Salesforce CLI command is used to retrieve metadata from an org?",
+              difficultyWeight: 1.3,
+              explanation: "'sf project retrieve start' is the modern CLI command to retrieve source from an org. The older 'sfdx force:source:retrieve' syntax is being deprecated in favor of the new 'sf' CLI commands.",
+              choices: [
+                { text: "sf project retrieve start", isCorrect: true },
+                { text: "sfdx force:source:pull", isCorrect: false },
+                { text: "sf org:open", isCorrect: false },
+                { text: "sf project deploy start", isCorrect: false },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  for (const subDomainData of subDomainsData) {
+    const subDomain = await prisma.subDomain.create({
+      data: {
+        name: subDomainData.name,
+        description: subDomainData.description,
+        order: subDomainData.order,
+        trackId: salesforceTrack.id,
+      },
+    });
+
+    for (const conceptData of subDomainData.concepts) {
+      const concept = await prisma.concept.create({
+        data: {
+          name: conceptData.name,
+          description: conceptData.description,
+          order: conceptData.order,
+          subDomainId: subDomain.id,
+        },
+      });
+
+      // Add resources for each concept
+      const resourceTypes = ["video", "article", "documentation"] as const;
+      const resourcesByConcept: Record<string, { title: string; description: string; url: string; type: typeof resourceTypes[number] }[]> = {
+        "Salesforce Setup & Organization": [
+          { title: "Salesforce Org Types Explained", description: "Understanding different Salesforce org types and their use cases", url: "https://www.youtube.com/watch?v=5TQqMqQrYbA", type: "video" },
+          { title: "Salesforce Setup Guide", description: "Official guide for setting up your Salesforce organization", url: "https://help.salesforce.com/s/articleView?id=sf.admin_setup.htm", type: "documentation" },
+        ],
+        "Object & Field Management": [
+          { title: "Creating Custom Objects in Salesforce", description: "Step-by-step guide to creating custom objects and fields", url: "https://www.youtube.com/watch?v=KsXKqZAS2kU", type: "video" },
+          { title: "Relationship Types Overview", description: "Understanding Lookup vs Master-Detail relationships", url: "https://help.salesforce.com/s/articleView?id=sf.relationships_considerations.htm", type: "documentation" },
+        ],
+        "Security & Sharing": [
+          { title: "Salesforce Security Model Explained", description: "Complete overview of the Salesforce security model", url: "https://www.youtube.com/watch?v=8XKqZAS2kUY", type: "video" },
+          { title: "OWD and Sharing Rules", description: "Deep dive into Organization-Wide Defaults and Sharing Rules", url: "https://help.salesforce.com/s/articleView?id=sf.security_sharing.htm", type: "documentation" },
+        ],
+        "Apex Basics & Syntax": [
+          { title: "Apex Fundamentals", description: "Introduction to Apex programming language basics", url: "https://www.youtube.com/watch?v=3XKqZAS2kUZ", type: "video" },
+          { title: "Apex Developer Guide", description: "Official Apex developer documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm", type: "documentation" },
+        ],
+        "Apex Governor Limits": [
+          { title: "Apex Governor Limits Deep Dive", description: "Understanding and working within governor limits", url: "https://www.youtube.com/watch?v=7XKqZAS2kUa", type: "video" },
+          { title: "Execution Governors and Limits", description: "Official documentation on Apex limits", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm", type: "documentation" },
+        ],
+        "Apex Triggers": [
+          { title: "Apex Triggers Best Practices", description: "Best practices for writing efficient and testable triggers", url: "https://www.youtube.com/watch?v=9XKqZAS2kUb", type: "video" },
+          { title: "Trigger Best Practices Guide", description: "Official guide for trigger development", url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm", type: "documentation" },
+        ],
+        "LWC Component Basics": [
+          { title: "Introduction to Lightning Web Components", description: "Getting started with LWC development", url: "https://www.youtube.com/watch?v=2XKqZAS2kUc", type: "video" },
+          { title: "LWC Developer Guide", description: "Official Lightning Web Components documentation", url: "https://developer.salesforce.com/docs/platform/lwc/guide/", type: "documentation" },
+        ],
+        "LWC Data Services": [
+          { title: "LWC Data Services and Wire Adapters", description: "Working with wire adapters and data in LWC", url: "https://www.youtube.com/watch?v=4XKqZAS2kUd", type: "video" },
+          { title: "Get Data with Wire Service", description: "Using wire adapters in Lightning Web Components", url: "https://developer.salesforce.com/docs/platform/lwc/guide/data-wire-service.htm", type: "documentation" },
+        ],
+        "Flow Builder Basics": [
+          { title: "Salesforce Flow Builder Tutorial", description: "Complete guide to Flow Builder", url: "https://www.youtube.com/watch?v=6XKqZAS2kUe", type: "video" },
+          { title: "Flow Builder Documentation", description: "Official Flow Builder user guide", url: "https://help.salesforce.com/s/articleView?id=sf.flow.htm", type: "documentation" },
+        ],
+        "Schema Design": [
+          { title: "Data Modeling in Salesforce", description: "Best practices for data modeling", url: "https://www.youtube.com/watch?v=1XKqZAS2kUf", type: "video" },
+          { title: "Data Model Design Guide", description: "Official data modeling documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/data_model.htm", type: "documentation" },
+        ],
+        "REST & SOAP APIs": [
+          { title: "Salesforce REST API Tutorial", description: "Working with REST API in Salesforce", url: "https://www.youtube.com/watch?v=8XKqZAS2kUg", type: "video" },
+          { title: "REST API Developer Guide", description: "Official REST API documentation", url: "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/", type: "documentation" },
+        ],
+        "Change Sets & Deployment": [
+          { title: "Salesforce Deployment Options", description: "Overview of change sets, CLI, and CI/CD", url: "https://www.youtube.com/watch?v=0XKqZAS2kUh", type: "video" },
+          { title: "Change Sets Documentation", description: "Official change sets deployment guide", url: "https://help.salesforce.com/s/articleView?id=sf.changesets.htm", type: "documentation" },
+        ],
+      };
+
+      const resources = resourcesByConcept[conceptData.name] || [];
+      for (const resource of resources) {
+        await prisma.resource.create({
+          data: {
+            ...resource,
+            conceptId: concept.id,
+          },
+        });
+      }
+
+      // Create Questions for the concept
+      for (const questionData of conceptData.questions) {
+        const question = await prisma.question.create({
+          data: {
+            text: questionData.text,
+            difficultyWeight: questionData.difficultyWeight,
+            explanation: questionData.explanation,
+            conceptId: concept.id,
+            choices: {
+              create: questionData.choices.map((c) => ({
+                text: c.text,
+                isCorrect: c.isCorrect,
+              })),
+            },
+          },
+        });
+      }
+    }
+  }
+
+  // Count results
+  const counts = {
+    concepts: await prisma.concept.count(),
+    questions: await prisma.question.count(),
+    choices: await prisma.choice.count(),
+    resources: await prisma.resource.count(),
+  };
+
+  console.log(`✅ Seed complete!`);
+  console.log(`   Tracks: 1 (Salesforce Developer)`);
+  console.log(`   Sub-Domains: ${subDomainsData.length}`);
+  console.log(`   Concepts: ${counts.concepts}`);
+  console.log(`   Questions: ${counts.questions}`);
+  console.log(`   Choices: ${counts.choices}`);
+  console.log(`   Resources: ${counts.resources}`);
+  console.log(`   Admin user: admin@chaduvkondi.com / Admin@123`);
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error("❌ Seed failed:", e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

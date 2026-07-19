@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  learner
+  admin
+}
+
+enum ResourceType {
+  video
+  article
+  documentation
+  interactive
+}
+
+enum QuizType {
+  diagnostic
+  practice
+  spaced_repetition
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(learner)
+  tierId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tier              TierDefinition?    @relation(fields: [tierId], references: [id])
+  quizAttempts      QuizAttempt[]
+  masteryScores     MasteryScore[]
+  leaderboardSnaps  LeaderboardSnapshot[]
+  spacedRepetitions SpacedRepetition[]
+}
+
+model Track {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+  icon        String @default("📚")
+  color       String @default("#6366f1")
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  subDomains SubDomain[]
+}
+
+model SubDomain {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  trackId     String
+  order       Int    @default(0)
+  createdAt   DateTime @default(now())
+
+  track     Track      @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  concepts  Concept[]
+}
+
+model Concept {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  subDomainId String
+  order       Int    @default(0)
+  createdAt   DateTime @default(now())
+
+  subDomain         SubDomain           @relation(fields: [subDomainId], references: [id], onDelete: Cascade)
+  questions         Question[]
+  resources         Resource[]
+  masteryScores     MasteryScore[]
+  spacedRepetitions SpacedRepetition[]
+}
+
+model Question {
+  id               String  @id @default(cuid())
+  text             String
+  conceptId        String
+  difficultyWeight Float   @default(1.0)
+  explanation      String
+  isActive         Boolean @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  concept        Concept       @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  choices        Choice[]
+  answerLogs     AnswerLog[]
+}
+
+model Choice {
+  id         String @id @default(cuid())
+  text       String
+  isCorrect  Boolean @default(false)
+  questionId String
+
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerLogs AnswerLog[]
+}
+
+model Resource {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  url         String
+  type        ResourceType @default(video)
+  conceptId   String
+  createdAt   DateTime     @default(now())
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  type        QuizType @default(practice)
+  score       Float?
+  totalWeight Float?
+  completed   Boolean  @default(false)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answerLogs AnswerLog[]
+}
+
+model AnswerLog {
+  id            String   @id @default(cuid())
+  quizAttemptId String
+  questionId    String
+  choiceId      String
+  isCorrect     Boolean
+  timeSpent     Int?
+  createdAt     DateTime @default(now())
+
+  quizAttempt QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  choice      Choice      @relation(fields: [choiceId], references: [id], onDelete: Cascade)
+}
+
+model MasteryScore {
+  id           String   @id @default(cuid())
+  userId       String
+  conceptId    String
+  score        Float    @default(0.0)
+  attempts     Int      @default(0)
+  correctCount Int      @default(0)
+  lastTestedAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+}
+
+model TierDefinition {
+  id        String @id @default(cuid())
+  name      String @unique
+  minScore  Float
+  color     String @default("#6366f1")
+  icon      String @default("⭐")
+  createdAt DateTime @default(now())
+
+  users  User[]
+}
+
+model LeaderboardSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  score     Float
+  rank      Int
+  period    String   @default("weekly")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SpacedRepetition {
+  id           String   @id @default(cuid())
+  userId       String
+  conceptId    String
+  interval     Int      @default(1)
+  easeFactor   Float    @default(2.5)
+  nextReviewAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+}
