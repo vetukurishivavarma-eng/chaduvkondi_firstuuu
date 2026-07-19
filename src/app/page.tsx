@@ -22,7 +22,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-xl">Chaduvkondi</span>
@@ -47,21 +47,21 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 -left-40 w-96 h-96 bg-violet-200/30 dark:bg-violet-800/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 -left-40 w-96 h-96 bg-emerald-200/30 dark:bg-emerald-800/10 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-indigo-200/30 dark:bg-indigo-800/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-violet-100/20 to-indigo-100/20 dark:from-violet-900/5 dark:to-indigo-900/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-emerald-100/20 to-teal-100/20 dark:from-emerald-900/5 dark:to-teal-900/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
               Mastery-Based Learning Platform
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
               Test First.
               <br />
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
                 Master Forever.
               </span>
             </h1>
@@ -109,7 +109,7 @@ export default function Home() {
                 icon: Target,
                 title: "Instant Remediation",
                 description: "Get curated resources — articles, videos, docs — immediately after every wrong answer. No searching, no waiting.",
-                color: "from-violet-500 to-indigo-600",
+                color: "from-emerald-500 to-teal-600",
                 step: "02",
               },
               {
@@ -121,7 +121,7 @@ export default function Home() {
               },
             ].map((feature) => (
               <div key={feature.title} className="relative group">
-                <div className="p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all duration-300">
+                <div className="p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
                     <div className={`p-3 rounded-xl bg-gradient-to-br ${feature.color} shadow-lg`}>
                       <feature.icon className="w-6 h-6 text-white" />
@@ -182,10 +182,10 @@ export default function Home() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg transition-all duration-300"
+                className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg transition-all duration-300"
               >
-                <div className="p-2.5 w-fit rounded-lg bg-violet-100 dark:bg-violet-900/30 mb-4">
-                  <feature.icon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                <div className="p-2.5 w-fit rounded-lg bg-emerald-100 dark:bg-emerald-900/30 mb-4">
+                  <feature.icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="font-semibold mb-2">{feature.title}</h3>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{feature.description}</p>
@@ -231,7 +231,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-600 px-8 py-16 md:px-16 md:py-20 text-center">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 px-8 py-16 md:px-16 md:py-20 text-center">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-32 -translate-x-32" />
             
@@ -262,7 +262,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold">Chaduvkondi</span>

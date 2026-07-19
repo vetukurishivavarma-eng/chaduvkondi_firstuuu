@@ -12,7 +12,14 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // Clean existing data
+  // Check if data already exists (idempotent)
+  const existingTrack = await prisma.track.findFirst({ where: { name: "Salesforce Developer" } });
+  if (existingTrack) {
+    console.log("✅ Data already seeded, skipping...");
+    return;
+  }
+
+  // Clean existing data (for fresh seed)
   await prisma.spacedRepetition.deleteMany();
   await prisma.leaderboardSnapshot.deleteMany();
   await prisma.masteryScore.deleteMany();

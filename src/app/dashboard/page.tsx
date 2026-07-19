@@ -144,7 +144,7 @@ export default function DashboardPage() {
               </p>
             )}
           </CardContent>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full -translate-y-8 translate-x-8" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-8 translate-x-8" />
         </Card>
 
         {/* Concepts Mastered */}
@@ -272,9 +272,9 @@ export default function DashboardPage() {
           {/* Spaced Repetition Due */}
           {spacedDue > 0 && (
             <Link href="/quiz?mode=spaced">
-              <Card className="cursor-pointer hover:shadow-md transition-all duration-200 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30 border-violet-200 dark:border-violet-800">
+              <Card className="cursor-pointer hover:shadow-md transition-all duration-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
                 <CardContent className="flex items-center gap-4 p-5">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
                     <BookOpen className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -323,7 +323,7 @@ export default function DashboardPage() {
                     <div
                       className={`p-2 rounded-lg ${
                         activity.type === "diagnostic"
-                          ? "bg-violet-100 dark:bg-violet-900/30"
+                          ? "bg-emerald-100 dark:bg-emerald-900/30"
                           : activity.type === "spaced_repetition"
                           ? "bg-amber-100 dark:bg-amber-900/30"
                           : "bg-emerald-100 dark:bg-emerald-900/30"

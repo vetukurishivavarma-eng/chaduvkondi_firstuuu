@@ -192,12 +192,12 @@ function AdminOverview() {
   }
 
   const statCards = [
-    { label: "Total Users", value: stats.users, icon: Users, color: "from-violet-500 to-indigo-600" },
+    { label: "Total Users", value: stats.users, icon: Users, color: "from-emerald-500 to-teal-600" },
     { label: "Total Tracks", value: stats.tracks, icon: BookOpen, color: "from-emerald-500 to-teal-600" },
     { label: "Total Concepts", value: stats.concepts, icon: BookOpen, color: "from-blue-500 to-cyan-600" },
     { label: "Total Questions", value: stats.questions, icon: HelpCircle, color: "from-amber-500 to-orange-600" },
     { label: "Total Resources", value: stats.resources, icon: FileText, color: "from-rose-500 to-pink-600" },
-    { label: "Quiz Attempts", value: stats.quizAttempts, icon: BarChart3, color: "from-purple-500 to-violet-600" },
+    { label: "Quiz Attempts", value: stats.quizAttempts, icon: BarChart3, color: "from-emerald-500 to-teal-600" },
   ];
 
   return (
@@ -400,7 +400,7 @@ function AdminUsers() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-sm font-bold w-9 h-9 flex items-center justify-center">
+                    <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-bold w-9 h-9 flex items-center justify-center">
                       {u.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                     </div>
                     <div>

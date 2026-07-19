@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between px-4 h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg">Chaduvkondi</span>
@@ -120,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Logo */}
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
             <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -141,11 +141,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/50 dark:to-indigo-950/50 text-violet-700 dark:text-violet-300 shadow-sm"
+                      ? "bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-700 dark:text-emerald-300 shadow-sm"
                       : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
                   }`}
                 >
-                  <item.icon className={`w-4.5 h-4.5 ${isActive ? "text-violet-600 dark:text-violet-400" : ""}`} />
+                  <item.icon className={`w-4.5 h-4.5 ${isActive ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
                   {item.label}
                 </Link>
               );
@@ -157,7 +157,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   pathname.startsWith("/admin")
-                    ? "bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/50 dark:to-indigo-950/50 text-violet-700 dark:text-violet-300 shadow-sm"
+                    ? "bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-700 dark:text-emerald-300 shadow-sm"
                     : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
               >
@@ -170,7 +170,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* User Footer */}
           <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-9 w-9 ring-2 ring-violet-200 dark:ring-violet-800">
+              <Avatar className="h-9 w-9 ring-2 ring-emerald-200 dark:ring-emerald-800">
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">

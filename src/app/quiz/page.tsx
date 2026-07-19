@@ -230,11 +230,11 @@ function QuizContent() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-violet-200 dark:border-violet-800"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-emerald-200 dark:border-emerald-800"
             onClick={() => !loading && startQuiz("practice")}
           >
             <CardContent className="p-6 space-y-4">
-              <div className="p-2.5 w-fit rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg">
+              <div className="p-2.5 w-fit rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
                 <Brain className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -302,7 +302,7 @@ function QuizContent() {
 
     return (
       <div className="max-w-2xl mx-auto space-y-6">
-        <Card className="text-center bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30 border-violet-200 dark:border-violet-800">
+        <Card className="text-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-8 space-y-4">
             <div
               className={`p-3 w-fit mx-auto rounded-full ${
@@ -322,7 +322,7 @@ function QuizContent() {
               )}
             </div>
             <h2 className="text-2xl font-bold">Quiz Complete!</h2>
-            <div className="text-5xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+            <div className="text-5xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
               {score}%
             </div>
             <p className="text-zinc-500">
@@ -386,9 +386,9 @@ function QuizContent() {
                             href={r.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors group"
+                            className="flex items-center gap-2 p-2 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors group"
                           >
-                            <ExternalLink className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                            <ExternalLink className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                             <span className="flex-1">{r.title}</span>
                             <Badge variant="secondary" className="text-[10px]">
                               {r.type}
@@ -453,7 +453,7 @@ function QuizContent() {
       </Badge>
 
       {/* Question Card */}
-      <Card className="border-violet-200 dark:border-violet-800">
+      <Card className="border-emerald-200 dark:border-emerald-800">
         <CardContent className="p-6 space-y-6">
           {/* Question Text */}
           <div className="space-y-2">
@@ -490,8 +490,8 @@ function QuizContent() {
                       : showWrong
                       ? "border-red-500 bg-red-50 dark:bg-red-950/20"
                       : isSelected
-                      ? "border-violet-500 bg-violet-50 dark:bg-violet-950/20"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-violet-300 dark:hover:border-violet-700"
+                      ? "border-violet-500 bg-emerald-50 dark:bg-emerald-950/20"
+                      : "border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-700"
                   }`}
                   onClick={() => !showFeedback && setSelectedChoice(choice.id)}
                 >
@@ -554,7 +554,7 @@ function QuizContent() {
 
             {/* Mastery Update */}
             <div className="flex items-center gap-3 text-sm">
-              <Target className="w-4 h-4 text-violet-500" />
+              <Target className="w-4 h-4 text-emerald-500" />
               <span>Concept mastery: </span>
               <span className="font-semibold">
                 {Math.round(answer.result.currentMastery)}%
@@ -567,7 +567,7 @@ function QuizContent() {
               answer.result.remediation.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-violet-500" />
+                    <BookOpen className="w-4 h-4 text-emerald-500" />
                     Recommended Resources
                   </p>
                   {answer.result.remediation.map((r) => (
@@ -576,9 +576,9 @@ function QuizContent() {
                       href={r.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors group"
+                      className="flex items-center gap-2 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors group"
                     >
-                      <ExternalLink className="w-4 h-4 text-violet-500 shrink-0" />
+                      <ExternalLink className="w-4 h-4 text-emerald-500 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{r.title}</p>
                         <p className="text-xs text-zinc-500 truncate">

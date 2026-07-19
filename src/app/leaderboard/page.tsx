@@ -101,11 +101,11 @@ export default function LeaderboardPage() {
 
       {/* Current User Stats */}
       {currentUser && (
-        <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30 border-violet-200 dark:border-violet-800">
+        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
                   <Trophy className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -145,7 +145,7 @@ export default function LeaderboardPage() {
             </div>
 
             <div className="mt-4 text-center text-sm text-zinc-500">
-              <span className="font-medium text-violet-600 dark:text-violet-400">
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">
                 Ahead of {currentUser.percentile}% of learners
               </span>
               {" "}— Keep up the great work!
@@ -197,7 +197,7 @@ export default function LeaderboardPage() {
                     key={entry.id}
                     className={`grid grid-cols-2 md:grid-cols-12 gap-4 items-center p-4 rounded-xl transition-all duration-200 ${
                       entry.isCurrentUser
-                        ? "bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800"
+                        ? "bg-violet-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
                         : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent"
                     }`}
                   >
@@ -211,7 +211,7 @@ export default function LeaderboardPage() {
 
                     {/* Name & Avatar */}
                     <div className="flex items-center gap-3 md:col-span-4 md:ml-0">
-                      <Avatar className={`h-8 w-8 ${entry.isCurrentUser ? "ring-2 ring-violet-400" : ""}`}>
+                      <Avatar className={`h-8 w-8 ${entry.isCurrentUser ? "ring-2 ring-emerald-400" : ""}`}>
                         <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
                       <div>

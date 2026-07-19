@@ -61,14 +61,14 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 via-white to-violet-50 dark:from-black dark:via-zinc-950 dark:to-violet-950/20 p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-violet-200/30 dark:bg-violet-800/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-emerald-200/30 dark:bg-emerald-800/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-200/30 dark:bg-indigo-800/10 rounded-full blur-3xl" />
       </div>
 
       <Card className="w-full max-w-md relative backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-2xl">
         <CardHeader className="text-center pb-4">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function SignupPage() {
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="text-violet-600 dark:text-violet-400 hover:underline font-medium"
+                className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
               >
                 Sign in
               </Link>
