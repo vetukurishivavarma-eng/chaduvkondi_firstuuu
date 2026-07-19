@@ -55,7 +55,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   async function handleLogout() {
-    document.cookie = "token=; path=/; max-age=0";
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
     router.push("/login");
     router.refresh();
   }
