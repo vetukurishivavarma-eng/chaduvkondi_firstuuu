@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles, Eye, EyeOff, Circle, Star, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -59,151 +59,118 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 via-white to-emerald-50 dark:from-black dark:via-zinc-950 dark:to-emerald-950/20 p-4 overflow-hidden">
-      {/* Floating background shapes */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[15%] right-[10%] w-64 h-64 bg-emerald-200/20 dark:bg-emerald-800/10 rounded-full blur-3xl animate-float-slow" />
-        <div className="absolute bottom-[20%] left-[10%] w-72 h-72 bg-teal-200/20 dark:bg-teal-800/10 rounded-full blur-3xl animate-float-delayed" />
-        <div className="absolute top-[40%] left-[30%] w-48 h-48 bg-amber-200/15 dark:bg-amber-800/10 rounded-full blur-3xl animate-drift" />
-        <div className="absolute bottom-[40%] right-[5%] w-40 h-40 bg-emerald-200/15 dark:bg-emerald-800/10 rounded-full blur-3xl animate-spin-slow" />
-        <div className="absolute top-[25%] right-[25%] animate-float">
-          <Circle className="w-6 h-6 text-emerald-300/20 dark:text-emerald-500/10" />
-        </div>
-      </div>
-
-      {/* Home Navigation */}
+    <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-4">
+      {/* Home */}
       <Link
         href="/"
-        className="fixed top-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/80 dark:hover:bg-zinc-900/80 backdrop-blur-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 group"
+        className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#9C9A94] hover:text-[#3D5A45] hover:bg-[#EDE9DF] transition-all duration-150"
       >
-        <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="font-medium">Home</span>
+        <ArrowLeft className="w-4 h-4" />
+        <span>Home</span>
       </Link>
 
-      <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-2xl animate-fade-in-up">
-        <CardHeader className="text-center pb-4">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 animate-bounce-gentle">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
-          <CardDescription className="text-zinc-500 dark:text-zinc-400">
-            Start your mastery journey today
-          </CardDescription>
-        </CardHeader>
+      <div className="w-full max-w-sm animate-fade-in">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-7 h-7 rounded-md bg-[#3D5A45]" />
+          <span className="font-heading font-semibold text-lg tracking-tight text-[#2B2925]">Chaduvkondi</span>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl animate-fade-in">
-                {error}
-              </div>
-            )}
+        <Card>
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-xl">Create your account</CardTitle>
+            <CardDescription>Start your mastery journey today</CardDescription>
+          </CardHeader>
 
-            <div className="space-y-2 animate-fade-in-up stagger-1">
-              <Label htmlFor="name" className="text-sm font-medium">
-                Full Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-                className="h-11 transition-all duration-200 focus:scale-[1.01]"
-              />
-            </div>
-
-            <div className="space-y-2 animate-fade-in-up stagger-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="h-11 transition-all duration-200 focus:scale-[1.01]"
-              />
-            </div>
-
-            <div className="space-y-2 animate-fade-in-up stagger-3">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Min. 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  className="h-11 pr-10 transition-all duration-200 focus:scale-[1.01]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2 animate-fade-in-up stagger-3">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                Confirm Password
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Re-enter your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                className="h-11 transition-all duration-200 focus:scale-[1.01]"
-              />
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex flex-col gap-3 pt-2 animate-fade-in-up stagger-4">
-            <Button
-              type="submit"
-              className="w-full h-11 text-base"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                "Create Account"
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="p-2.5 text-sm bg-[#B5533C]/10 border border-[#B5533C]/20 text-[#B5533C] rounded-md">
+                  {error}
+                </div>
               )}
-            </Button>
-            <p className="text-sm text-center text-zinc-500 dark:text-zinc-400">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
-              >
-                Sign in
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Min. 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9C9A94] hover:text-[#2B2925] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex flex-col gap-3 pt-2">
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating account...</>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+              <p className="text-sm text-center text-[#9C9A94]">
+                Already have an account?{" "}
+                <Link href="/login" className="text-[#3D5A45] hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D5A45] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-400 hover:to-teal-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40",
-        destructive: "bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/25",
-        outline: "border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800",
-        secondary: "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700",
-        ghost: "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-        link: "text-emerald-600 dark:text-emerald-400 underline-offset-4 hover:underline",
+        default: "bg-[#3D5A45] text-[#F5F1E8] hover:bg-[#4B6E55] shadow-sm hover:shadow-md border border-[#2D4635]",
+        destructive: "bg-[#B5533C] text-[#F5F1E8] hover:bg-[#CC6B54] shadow-sm border border-[#9A4630]",
+        outline: "border border-[#E3DFD4] bg-[#FAF8F4] text-[#2B2925] hover:bg-[#EDE9DF] hover:border-[#C08A3E]",
+        secondary: "bg-[#C08A3E] text-[#FAF8F4] hover:bg-[#D4A45A] shadow-sm border border-[#A6742A]",
+        ghost: "text-[#2B2925] hover:bg-[#EDE9DF] hover:text-[#3D5A45]",
+        link: "text-[#3D5A45] underline-offset-4 hover:underline decoration-[#C08A3E] decoration-2",
       },
       size: {
-        default: "h-11 px-6 py-2",
-        sm: "h-9 rounded-lg px-4 text-xs",
-        lg: "h-12 rounded-xl px-8 text-base",
-        xl: "h-14 rounded-2xl px-10 text-lg",
-        icon: "h-10 w-10 rounded-lg",
+        default: "h-10 px-5 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-lg px-7 text-base",
+        xl: "h-14 rounded-xl px-9 text-lg",
+        icon: "h-10 w-10 rounded-md",
       },
     },
     defaultVariants: {

@@ -3,16 +3,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#3D5A45] focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
-        secondary: "border-transparent bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300",
-        destructive: "border-transparent bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-        success: "border-transparent bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300",
-        warning: "border-transparent bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
-        outline: "text-zinc-700 dark:text-zinc-300",
+        default: "border-[#3D5A45]/20 bg-[#3D5A45]/10 text-[#3D5A45]",
+        secondary: "border-[#C08A3E]/20 bg-[#C08A3E]/10 text-[#A6742A]",
+        destructive: "border-[#B5533C]/20 bg-[#B5533C]/10 text-[#B5533C]",
+        success: "border-[#3D5A45]/20 bg-[#3D5A45]/10 text-[#3D5A45]",
+        warning: "border-[#C08A3E]/20 bg-[#C08A3E]/10 text-[#A6742A]",
+        outline: "border-[#E3DFD4] text-[#2B2925]",
       },
     },
     defaultVariants: {
