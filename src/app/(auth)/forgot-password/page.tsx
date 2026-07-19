@@ -55,7 +55,17 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-2xl animate-scale-in">
+        {/* Home Navigation */}
+      <Link
+        href="/"
+        className="fixed top-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/80 dark:hover:bg-zinc-900/80 backdrop-blur-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 group"
+      >
+        <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="font-medium">Home</span>
+      </Link>
+
+      <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-2xl animate-scale-in">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center mb-4">
               <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30 animate-bounce-gentle">
@@ -107,6 +117,16 @@ export default function ForgotPasswordPage() {
           <Circle className="w-6 h-6 text-emerald-300/20 dark:text-emerald-500/10" />
         </div>
       </div>
+
+      {/* Home Navigation */}
+      <Link
+        href="/"
+        className="fixed top-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/80 dark:hover:bg-zinc-900/80 backdrop-blur-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 group"
+      >
+        <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="font-medium">Home</span>
+      </Link>
 
       <Card className="w-full max-w-md relative z-10 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-2xl animate-fade-in-up">
         <CardHeader className="text-center pb-4">

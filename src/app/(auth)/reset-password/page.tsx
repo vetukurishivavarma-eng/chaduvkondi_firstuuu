@@ -211,6 +211,16 @@ export default function ResetPasswordPage() {
         </div>
       </div>
 
+      {/* Home Navigation */}
+      <Link
+        href="/"
+        className="fixed top-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/80 dark:hover:bg-zinc-900/80 backdrop-blur-sm border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-all duration-200 group"
+      >
+        <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="font-medium">Home</span>
+      </Link>
+
       <Suspense fallback={
         <div className="flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
