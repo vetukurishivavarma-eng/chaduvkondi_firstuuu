@@ -36,66 +36,63 @@ async function main() {
     return;
   }
 
-  // Clean existing data (for fresh seed)
-  await prisma.spacedRepetition.deleteMany();
-  await prisma.leaderboardSnapshot.deleteMany();
-  await prisma.masteryScore.deleteMany();
-  await prisma.answerLog.deleteMany();
-  await prisma.quizAttempt.deleteMany();
-  await prisma.resource.deleteMany();
-  await prisma.choice.deleteMany();
-  await prisma.question.deleteMany();
-  await prisma.concept.deleteMany();
-  await prisma.subDomain.deleteMany();
-  await prisma.track.deleteMany();
-  await prisma.tierDefinition.deleteMany();
-  await prisma.user.deleteMany();
+  // ═══════════════════════════════════════════════════════════════
+  // NOTE: This seed NEVER deletes any data. It only creates data
+  // that doesn't exist yet. User accounts are NEVER touched.
+  // ═══════════════════════════════════════════════════════════════
 
-  // Create Tiers
-  const tiers = await Promise.all([
-    prisma.tierDefinition.create({
-      data: { name: "Spark", minScore: 0, color: "#94a3b8", icon: "✨" },
-    }),
-    prisma.tierDefinition.create({
-      data: { name: "Apprentice", minScore: 20, color: "#22c55e", icon: "🔥" },
-    }),
-    prisma.tierDefinition.create({
-      data: { name: "Specialist", minScore: 40, color: "#3b82f6", icon: "💎" },
-    }),
-    prisma.tierDefinition.create({
-      data: { name: "Expert", minScore: 60, color: "#8b5cf6", icon: "🏆" },
-    }),
-    prisma.tierDefinition.create({
-      data: { name: "Architect", minScore: 80, color: "#f59e0b", icon: "👑" },
-    }),
-    prisma.tierDefinition.create({
-      data: { name: "Elite", minScore: 95, color: "#ef4444", icon: "🌟" },
-    }),
-  ]);
-  console.log(`✅ Created ${tiers.length} tiers`);
+  // Create Tiers only if they don't exist
+  const tierNames = ["Spark", "Apprentice", "Specialist", "Expert", "Architect", "Elite"];
+  const tiers: any[] = [];
+  for (let i = 0; i < tierNames.length; i++) {
+    let tier = await prisma.tierDefinition.findUnique({ where: { name: tierNames[i] } });
+    if (!tier) {
+      const tierData = [
+        { name: "Spark", minScore: 0, color: "#94a3b8", icon: "✨" },
+        { name: "Apprentice", minScore: 20, color: "#22c55e", icon: "🔥" },
+        { name: "Specialist", minScore: 40, color: "#3b82f6", icon: "💎" },
+        { name: "Expert", minScore: 60, color: "#8b5cf6", icon: "🏆" },
+        { name: "Architect", minScore: 80, color: "#f59e0b", icon: "👑" },
+        { name: "Elite", minScore: 95, color: "#ef4444", icon: "🌟" },
+      ];
+      tier = await prisma.tierDefinition.create({ data: tierData[i] });
+    }
+    tiers.push(tier);
+  }
+  console.log(`✅ ${tiers.length} tiers available`);
 
-  // Create Admin User
-  const adminUser = await prisma.user.create({
-    data: {
-      email: "admin@chaduvkondi.com",
-      password: "$2b$10$FDjrjLGOv6K4WtANkqQ95.oh3CYTzXGM.6PCwqcYcPRZ8h6bQSPFu", // Admin@123
-      name: "Platform Admin",
-      role: "admin",
-      tierId: tiers[5].id, // Elite
-    },
-  });
-  console.log(`✅ Created admin user: ${adminUser.email}`);
+  // Create Admin User only if doesn't exist
+  let adminUser = await prisma.user.findUnique({ where: { email: "admin@chaduvkondi.com" } });
+  if (!adminUser) {
+    adminUser = await prisma.user.create({
+      data: {
+        email: "admin@chaduvkondi.com",
+        password: "$2b$10$FDjrjLGOv6K4WtANkqQ95.oh3CYTzXGM.6PCwqcYcPRZ8h6bQSPFu", // Admin@123
+        name: "Platform Admin",
+        role: "admin",
+        tierId: tiers[5].id,
+      },
+    });
+    console.log(`✅ Created admin user: ${adminUser.email}`);
+  } else {
+    console.log(`✅ Admin user already exists: ${adminUser.email}`);
+  }
 
-  // Create Salesforce Track
-  const salesforceTrack = await prisma.track.create({
-    data: {
-      name: "Salesforce Developer",
-      description: "Master Salesforce development from zero to expert — covering Apex, LWC, Flow, Data Modeling, Security, Integration, and DevOps fundamentals.",
-      icon: "☁️",
-      color: "#00a1e0",
-    },
-  });
-  console.log(`✅ Created track: ${salesforceTrack.name}`);
+  // Create Salesforce Track only if doesn't exist
+  let salesforceTrack = await prisma.track.findUnique({ where: { name: "Salesforce Developer" } });
+  if (!salesforceTrack) {
+    salesforceTrack = await prisma.track.create({
+      data: {
+        name: "Salesforce Developer",
+        description: "Master Salesforce development from zero to expert — covering Apex, LWC, Flow, Data Modeling, Security, Integration, and DevOps fundamentals.",
+        icon: "☁️",
+        color: "#00a1e0",
+      },
+    });
+    console.log(`✅ Created track: ${salesforceTrack.name}`);
+  } else {
+    console.log(`✅ Track already exists: ${salesforceTrack.name}`);
+  }
 
   // Create Sub-Domains with Concepts and Questions
   const subDomainsData = [
@@ -728,17 +725,29 @@ async function main() {
   ];
 
   for (const subDomainData of subDomainsData) {
-    const subDomain = await prisma.subDomain.create({
-      data: {
-        name: subDomainData.name,
-        description: subDomainData.description,
-        order: subDomainData.order,
-        trackId: salesforceTrack.id,
-      },
+    // Check if sub-domain already exists before creating
+    let subDomain = await prisma.subDomain.findFirst({
+      where: { name: subDomainData.name, trackId: salesforceTrack.id },
     });
+    if (!subDomain) {
+      subDomain = await prisma.subDomain.create({
+        data: {
+          name: subDomainData.name,
+          description: subDomainData.description,
+          order: subDomainData.order,
+          trackId: salesforceTrack.id,
+        },
+      });
+    }
 
     for (const conceptData of subDomainData.concepts) {
-      const concept = await prisma.concept.create({
+      // Check if concept already exists before creating
+      let concept = await prisma.concept.findFirst({
+        where: { name: conceptData.name, subDomainId: subDomain.id },
+      });
+      if (concept) continue; // Skip if already exists
+
+      concept = await prisma.concept.create({
         data: {
           name: conceptData.name,
           description: conceptData.description,
