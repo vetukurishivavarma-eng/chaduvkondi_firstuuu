@@ -75,7 +75,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-2 text-zinc-400">
-          <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           <span>Loading dashboard...</span>
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight animate-fade-in-up">
             Welcome back, {data.user.name.split(" ")[0]}!
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">
@@ -126,7 +126,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up">
         {/* Overall Mastery */}
         <Card className="relative overflow-hidden">
           <CardHeader className="pb-2">
@@ -212,10 +212,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sub-Domain Scores */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 animate-fade-in-up stagger-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="w-5 h-5 text-violet-600" />
+              <BarChart3 className="w-5 h-5 text-emerald-600" />
               Sub-Domain Mastery
             </CardTitle>
           </CardHeader>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
         {/* Weak Concepts & Stats */}
         <div className="space-y-6">
           {/* Weak Concepts */}
-          <Card>
+          <Card className="animate-fade-in-up stagger-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -272,7 +272,7 @@ export default function DashboardPage() {
           {/* Spaced Repetition Due */}
           {spacedDue > 0 && (
             <Link href="/quiz?mode=spaced">
-              <Card className="cursor-pointer hover:shadow-md transition-all duration-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
+              <Card className="cursor-pointer card-lift bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
                 <CardContent className="flex items-center gap-4 p-5">
                   <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
                     <BookOpen className="w-5 h-5 text-white" />
@@ -292,10 +292,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <Card>
+      <Card className="animate-fade-in-up stagger-5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Clock className="w-5 h-5 text-violet-600" />
+            <Clock className="w-5 h-5 text-emerald-600" />
             Recent Activity
           </CardTitle>
         </CardHeader>
@@ -330,7 +330,7 @@ export default function DashboardPage() {
                       }`}
                     >
                       {activity.type === "diagnostic" ? (
-                        <Zap className="w-4 h-4 text-violet-600" />
+                        <Zap className="w-4 h-4 text-emerald-600" />
                       ) : activity.type === "spaced_repetition" ? (
                         <BookOpen className="w-4 h-4 text-amber-600" />
                       ) : (
