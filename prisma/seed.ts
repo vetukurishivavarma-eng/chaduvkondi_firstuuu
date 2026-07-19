@@ -15,6 +15,23 @@ async function main() {
   // Check if data already exists (idempotent)
   const existingTrack = await prisma.track.findFirst({ where: { name: "Salesforce Developer" } });
   if (existingTrack) {
+    // Even if data exists, ensure admin password is correct
+    const admin = await prisma.user.findUnique({ where: { email: "admin@chaduvkondi.com" } });
+    if (admin) {
+      const bcrypt = require("bcryptjs");
+      const isValid = bcrypt.compareSync("Admin@123", admin.password);
+      if (!isValid) {
+        console.log("🔑 Admin password hash was invalid, updating...");
+        const newHash = bcrypt.hashSync("Admin@123", 10);
+        await prisma.user.update({
+          where: { id: admin.id },
+          data: { password: newHash },
+        });
+        console.log("✅ Admin password updated successfully");
+      } else {
+        console.log("✅ Admin password is correct");
+      }
+    }
     console.log("✅ Data already seeded, skipping...");
     return;
   }
@@ -61,7 +78,7 @@ async function main() {
   const adminUser = await prisma.user.create({
     data: {
       email: "admin@chaduvkondi.com",
-      password: "$2a$10$8K1p/a0dL1LXMIgoEDFrwOfMQkfAjkMBcGmEGvFx0F5YL.GxG6KqO", // Admin@123
+      password: "$2b$10$FDjrjLGOv6K4WtANkqQ95.oh3CYTzXGM.6PCwqcYcPRZ8h6bQSPFu", // Admin@123
       name: "Platform Admin",
       role: "admin",
       tierId: tiers[5].id, // Elite
