@@ -4,6 +4,13 @@ import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { type AvatarState } from "./avatar-activity-provider";
+import {
+  getAnimationFrame,
+  blendFrames,
+  avatarStateToAnim,
+  type AnimationFrame,
+  type AnimState,
+} from "@/lib/avatar-animations";
 
 // ─── Body part color palette ───────────────────────────────────────────────
 
@@ -18,19 +25,52 @@ const COLORS = {
 // ─── Props ─────────────────────────────────────────────────────────────────
 
 interface GeometricAvatarProps {
-  photoDataUrl: string | null; // uploaded photo to texture on face
+  photoDataUrl: string | null;
   state: AvatarState;
+}
+
+// ─── Smooth state blend helper ─────────────────────────────────────────────
+
+class AnimationBlender {
+  private currentState: AnimState = "idle";
+  private previousState: AnimState = "idle";
+  private blendTime = 0;
+  private readonly blendDuration = 0.4; // seconds to transition
+
+  update(delta: number, targetState: AnimState) {
+    if (targetState !== this.currentState) {
+      this.previousState = this.currentState;
+      this.currentState = targetState;
+      this.blendTime = 0;
+    }
+    this.blendTime = Math.min(this.blendTime + delta, this.blendDuration);
+  }
+
+  getFrame(t: number): AnimationFrame {
+    const from = getAnimationFrame(this.previousState, t);
+    const to = getAnimationFrame(this.currentState, t);
+    const progress = this.blendDuration > 0
+      ? Math.min(this.blendTime / this.blendDuration, 1)
+      : 1;
+    // Smooth ease-in-out curve
+    const eased = progress * progress * (3 - 2 * progress);
+    return blendFrames(from, to, eased);
+  }
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
   const groupRef = useRef<THREE.Group>(null!);
-  const headRef = useRef<THREE.Mesh>(null!);
+  const headRef = useRef<THREE.Group>(null!);
   const leftArmRef = useRef<THREE.Group>(null!);
   const rightArmRef = useRef<THREE.Group>(null!);
   const leftLegRef = useRef<THREE.Group>(null!);
   const rightLegRef = useRef<THREE.Group>(null!);
+  const leftElbowRef = useRef<THREE.Mesh>(null!);
+  const rightElbowRef = useRef<THREE.Mesh>(null!);
+
+  const blenderRef = useRef(new AnimationBlender());
 
   // Load photo texture
   const texture = useMemo(() => {
@@ -41,51 +81,49 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
     return tex;
   }, [photoDataUrl]);
 
-  // Simple idle/typing animation
+  // Main animation loop
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    const time = Date.now() * 0.001;
-    const isIdle = state === "idle";
-    const isTyping = state === "typing";
 
-    // Body sway / bob
-    if (isIdle) {
-      groupRef.current.position.y = Math.sin(time * 0.8) * 0.015;
-      groupRef.current.rotation.z = Math.sin(time * 0.4) * 0.02;
-    } else if (isTyping) {
-      groupRef.current.position.y = 0;
-      groupRef.current.rotation.z = 0;
-    } else {
-      groupRef.current.position.y = Math.sin(time * 1.2) * 0.008;
-      groupRef.current.rotation.z = 0;
+    const animState = avatarStateToAnim(state);
+    blenderRef.current.update(delta, animState);
+
+    const t = Date.now() * 0.001;
+    const frame = blenderRef.current.getFrame(t);
+
+    // Apply body transforms
+    groupRef.current.position.y = frame.bodyY;
+    groupRef.current.rotation.z = frame.bodyRotZ;
+
+    // Head tilt
+    if (headRef.current) {
+      headRef.current.rotation.x = frame.headTilt;
     }
 
-    // Arm swing (typing = arms forward, idle = relaxed, active = slight swing)
-    if (leftArmRef.current && rightArmRef.current) {
-      if (isTyping) {
-        leftArmRef.current.rotation.x = -0.6 + Math.sin(time * 6) * 0.1;
-        rightArmRef.current.rotation.x = -0.6 + Math.sin(time * 6 + 0.5) * 0.1;
-      } else if (isIdle) {
-        leftArmRef.current.rotation.x = 0.3 + Math.sin(time * 0.5) * 0.1;
-        rightArmRef.current.rotation.x = 0.3 + Math.sin(time * 0.5 + 0.3) * 0.1;
-      } else {
-        leftArmRef.current.rotation.x = Math.sin(time * 1.5) * 0.15;
-        rightArmRef.current.rotation.x = Math.sin(time * 1.5 + 1) * 0.15;
-      }
+    // Arms
+    if (leftArmRef.current) {
+      leftArmRef.current.rotation.x = frame.leftArm;
+      leftArmRef.current.rotation.z = frame.leftArmZ;
+    }
+    if (rightArmRef.current) {
+      rightArmRef.current.rotation.x = frame.rightArm;
+      rightArmRef.current.rotation.z = frame.rightArmZ;
     }
 
-    // Leg swing (walking animation when active, still when idle)
-    if (leftLegRef.current && rightLegRef.current) {
-      if (isIdle) {
-        leftLegRef.current.rotation.x = Math.sin(time * 0.3) * 0.05;
-        rightLegRef.current.rotation.x = Math.sin(time * 0.3 + 0.5) * 0.05;
-      } else if (isTyping) {
-        leftLegRef.current.rotation.x = 0;
-        rightLegRef.current.rotation.x = 0;
-      } else {
-        leftLegRef.current.rotation.x = Math.sin(time * 2.5) * 0.2;
-        rightLegRef.current.rotation.x = Math.sin(time * 2.5 + Math.PI) * 0.2;
-      }
+    // Legs
+    if (leftLegRef.current) {
+      leftLegRef.current.rotation.x = frame.leftLeg;
+    }
+    if (rightLegRef.current) {
+      rightLegRef.current.rotation.x = frame.rightLeg;
+    }
+
+    // Elbows (forearm bend)
+    if (leftElbowRef.current) {
+      leftElbowRef.current.rotation.x = frame.leftElbow;
+    }
+    if (rightElbowRef.current) {
+      rightElbowRef.current.rotation.x = frame.rightElbow;
     }
   });
 
@@ -97,9 +135,9 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
         <meshStandardMaterial color={COLORS.shirt} />
       </mesh>
 
-      {/* Head */}
-      <group position={[0, 1.05, 0]}>
-        <mesh ref={headRef}>
+      {/* Head group (for tilting) */}
+      <group ref={headRef} position={[0, 1.05, 0]}>
+        <mesh>
           <boxGeometry args={[0.38, 0.4, 0.35]} />
           <meshStandardMaterial
             color={COLORS.skin}
@@ -111,7 +149,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
           <boxGeometry args={[0.4, 0.12, 0.37]} />
           <meshStandardMaterial color={COLORS.hair} />
         </mesh>
-        {/* Eyes (simple dots) */}
+        {/* Eyes */}
         <mesh position={[-0.12, 0.05, 0.18]}>
           <sphereGeometry args={[0.04, 8, 8]} />
           <meshStandardMaterial color="#1a1a1a" />
@@ -124,7 +162,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
 
       {/* Left Arm */}
       <group ref={leftArmRef} position={[-0.35, 0.65, 0]}>
-        <mesh position={[0, -0.25, 0]}>
+        <mesh ref={leftElbowRef} position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.4, 0.12]} />
           <meshStandardMaterial color={COLORS.skin} />
         </mesh>
@@ -132,7 +170,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
 
       {/* Right Arm */}
       <group ref={rightArmRef} position={[0.35, 0.65, 0]}>
-        <mesh position={[0, -0.25, 0]}>
+        <mesh ref={rightElbowRef} position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.4, 0.12]} />
           <meshStandardMaterial color={COLORS.skin} />
         </mesh>
@@ -144,7 +182,6 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
           <boxGeometry args={[0.14, 0.35, 0.14]} />
           <meshStandardMaterial color={COLORS.pants} />
         </mesh>
-        {/* Shoe */}
         <mesh position={[0, -0.42, 0.03]}>
           <boxGeometry args={[0.16, 0.08, 0.22]} />
           <meshStandardMaterial color={COLORS.shoes} />
@@ -157,7 +194,6 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
           <boxGeometry args={[0.14, 0.35, 0.14]} />
           <meshStandardMaterial color={COLORS.pants} />
         </mesh>
-        {/* Shoe */}
         <mesh position={[0, -0.42, 0.03]}>
           <boxGeometry args={[0.16, 0.08, 0.22]} />
           <meshStandardMaterial color={COLORS.shoes} />
