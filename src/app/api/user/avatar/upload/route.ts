@@ -3,71 +3,49 @@ import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, handleApiError } from "@/lib/api-helpers";
 import { deleteLocalAvatarFile } from "@/lib/avatar";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "avatars");
 
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth();
 
-    const formData = await request.formData();
-    const file = formData.get("avatar") as File | null;
+    const { avatarDataUrl } = await request.json();
 
-    if (!file) {
-      return errorResponse("No file provided", 400);
+    if (!avatarDataUrl || typeof avatarDataUrl !== "string") {
+      return errorResponse("avatarDataUrl is required and must be a string", 400);
     }
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      return errorResponse("File must be an image (JPEG, PNG, WebP, or GIF)", 400);
+    // Validate it's a valid data URL
+    if (!avatarDataUrl.startsWith("data:image/")) {
+      return errorResponse("Invalid image data URL", 400);
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return errorResponse("File must be less than 5MB", 400);
+    // Validate max size (data URLs are ~33% larger than binary, allow ~6MB)
+    const approxBytes = (avatarDataUrl.length * 3) / 4;
+    if (approxBytes > 6 * 1024 * 1024) {
+      return errorResponse("Image must be less than 5MB", 400);
     }
 
-    // Fetch current avatar URL before updating so we can delete the old file
+    // Fetch current avatar URL to clean up old file if switching from local upload
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
       select: { avatarUrl: true },
     });
 
-    // Create unique filename
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `avatar-${session.id}-${Date.now()}.${ext}`;
-    const filePath = path.join(UPLOAD_DIR, filename);
-
-    // Ensure directory exists
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
-    // Write new file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Delete old file from disk (non-critical – continue even if it fails)
-    await deleteLocalAvatarFile(currentUser?.avatarUrl ?? null);
-
-    // URL path for the new uploaded file
-    const avatarUrl = `/uploads/avatars/${filename}`;
-
-    // Save to database
+    // Save base64 data URL directly to database (serverless-safe, no disk writes)
     await prisma.user.update({
       where: { id: session.id },
       data: {
-        avatarUrl,
+        avatarUrl: avatarDataUrl,
         avatarCreatedAt: new Date(),
       },
     });
 
+    // Delete old local file if user had one (non-critical)
+    await deleteLocalAvatarFile(currentUser?.avatarUrl ?? null);
+
     return NextResponse.json({
       success: true,
-      data: { avatarUrl },
+      data: { avatarUrl: avatarDataUrl },
     });
   } catch (error) {
     return handleApiError(error);

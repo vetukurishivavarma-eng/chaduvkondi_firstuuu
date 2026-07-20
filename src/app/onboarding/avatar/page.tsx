@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Sparkles, SkipForward, Upload } from "lucide-react";
+import { imageFileToBase64 } from "@/lib/image-to-base64";
 
 export default function OnboardingAvatarPage() {
   const router = useRouter();
@@ -54,12 +55,13 @@ export default function OnboardingAvatarPage() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("avatar", selectedFile);
+      // Resize & convert to base64 on the client side (no disk writes needed)
+      const avatarDataUrl = await imageFileToBase64(selectedFile);
 
       const res = await fetch("/api/user/avatar/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarDataUrl }),
       });
 
       const data = await res.json();
@@ -73,8 +75,8 @@ export default function OnboardingAvatarPage() {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       router.push("/dashboard");
       router.refresh();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process image. Please try again.");
     } finally {
       setLoading(false);
     }

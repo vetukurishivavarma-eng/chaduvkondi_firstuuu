@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Sparkles, Trash2, ArrowLeft, User, Upload, Link as LinkIcon } from "lucide-react";
+import { imageFileToBase64 } from "@/lib/image-to-base64";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -54,12 +55,13 @@ export default function ProfilePage() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("avatar", file);
+      // Resize & convert to base64 on the client side (no disk writes needed)
+      const avatarDataUrl = await imageFileToBase64(file);
 
       const res = await fetch("/api/user/avatar/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarDataUrl }),
       });
 
       const data = await res.json();
@@ -72,8 +74,8 @@ export default function ProfilePage() {
         prev ? { ...prev, avatarUrl: data.data.avatarUrl, avatarCreatedAt: new Date().toISOString() } : prev
       );
       setShowUploader(false);
-    } catch {
-      setError("Network error");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process image");
     } finally {
       setSaving(false);
       // Reset file input so the same file can be re-selected
