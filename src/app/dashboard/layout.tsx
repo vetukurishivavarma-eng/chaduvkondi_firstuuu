@@ -26,6 +26,7 @@ interface User {
   avatarShirtColor?: string;
   avatarPantsColor?: string;
   avatarHairColor?: string;
+  avatarSkinColor?: string;
   overallScore?: number;
   conceptsCount?: number;
   tier?: { name: string; color: string; icon: string } | null;
@@ -213,6 +214,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         shirtColor={user.avatarShirtColor}
         pantsColor={user.avatarPantsColor}
         hairColor={user.avatarHairColor}
+        skinColor={user.avatarSkinColor}
       />
     </div>
     </AvatarActivityProvider>

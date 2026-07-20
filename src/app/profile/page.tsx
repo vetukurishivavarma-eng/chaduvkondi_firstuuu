@@ -25,6 +25,7 @@ export default function ProfilePage() {
     avatarShirtColor?: string;
     avatarPantsColor?: string;
     avatarHairColor?: string;
+    avatarSkinColor?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,6 +36,7 @@ export default function ProfilePage() {
   const [shirtColor, setShirtColor] = useState<string>(DEFAULT_OUTFIT_COLORS.shirt);
   const [pantsColor, setPantsColor] = useState<string>(DEFAULT_OUTFIT_COLORS.pants);
   const [hairColor, setHairColor] = useState<string>(DEFAULT_OUTFIT_COLORS.hair);
+  const [skinColor, setSkinColor] = useState<string>(DEFAULT_OUTFIT_COLORS.skin);
 
   // Fetch user data
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function ProfilePage() {
           if (data.data.avatarShirtColor) setShirtColor(data.data.avatarShirtColor);
           if (data.data.avatarPantsColor) setPantsColor(data.data.avatarPantsColor);
           if (data.data.avatarHairColor) setHairColor(data.data.avatarHairColor);
+          if (data.data.avatarSkinColor) setSkinColor(data.data.avatarSkinColor);
         } else router.push("/login");
       })
       .finally(() => setLoading(false));
@@ -145,7 +148,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/user/avatar/colors", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shirtColor, pantsColor, hairColor }),
+        body: JSON.stringify({ shirtColor, pantsColor, hairColor, skinColor }),
       });
       const data = await res.json();
       if (!data.success) {
@@ -154,7 +157,7 @@ export default function ProfilePage() {
       }
       setUser((prev) =>
         prev
-          ? { ...prev, avatarShirtColor: shirtColor, avatarPantsColor: pantsColor, avatarHairColor: hairColor }
+          ? { ...prev, avatarShirtColor: shirtColor, avatarPantsColor: pantsColor, avatarHairColor: hairColor, avatarSkinColor: skinColor }
           : prev
       );
       setShowColorPicker(false);
@@ -176,6 +179,7 @@ export default function ProfilePage() {
           shirtColor: DEFAULT_OUTFIT_COLORS.shirt,
           pantsColor: DEFAULT_OUTFIT_COLORS.pants,
           hairColor: DEFAULT_OUTFIT_COLORS.hair,
+          skinColor: DEFAULT_OUTFIT_COLORS.skin,
         }),
       });
       const data = await res.json();
@@ -187,9 +191,10 @@ export default function ProfilePage() {
       setShirtColor(DEFAULT_OUTFIT_COLORS.shirt);
       setPantsColor(DEFAULT_OUTFIT_COLORS.pants);
       setHairColor(DEFAULT_OUTFIT_COLORS.hair);
+      setSkinColor(DEFAULT_OUTFIT_COLORS.skin);
       setUser((prev) =>
         prev
-          ? { ...prev, avatarShirtColor: DEFAULT_OUTFIT_COLORS.shirt, avatarPantsColor: DEFAULT_OUTFIT_COLORS.pants, avatarHairColor: DEFAULT_OUTFIT_COLORS.hair }
+          ? { ...prev, avatarShirtColor: DEFAULT_OUTFIT_COLORS.shirt, avatarPantsColor: DEFAULT_OUTFIT_COLORS.pants, avatarHairColor: DEFAULT_OUTFIT_COLORS.hair, avatarSkinColor: DEFAULT_OUTFIT_COLORS.skin }
           : prev
       );
       setShowColorPicker(false);
@@ -402,7 +407,29 @@ export default function ProfilePage() {
                 Outfit Colors
               </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Skin color */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-[var(--muted)]">Skin</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={skinColor}
+                      onChange={(e) => setSkinColor(e.target.value)}
+                      className="w-9 h-9 rounded-md border border-[var(--border)] cursor-pointer bg-transparent p-0.5"
+                    />
+                    <Input
+                      value={skinColor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) setSkinColor(val);
+                      }}
+                      placeholder="#E8C4A0"
+                      className="font-mono text-xs h-9"
+                    />
+                  </div>
+                </div>
+
                 {/* Shirt color */}
                 <div className="space-y-2">
                   <Label className="text-xs text-[var(--muted)]">Shirt</Label>
@@ -473,6 +500,8 @@ export default function ProfilePage() {
               {/* Mini preview with current colors */}
               <div className="flex items-center gap-3 p-3 bg-[var(--background)] rounded-lg border border-[var(--border)]">
                 <div className="flex items-center gap-1">
+                  {/* Skin */}
+                  <div className="w-6 h-6 rounded-full border border-[var(--border)]" style={{ backgroundColor: skinColor }} />
                   {/* Hair */}
                   <div className="w-6 h-6 rounded-full border border-[var(--border)]" style={{ backgroundColor: hairColor }} />
                   {/* Shirt */}

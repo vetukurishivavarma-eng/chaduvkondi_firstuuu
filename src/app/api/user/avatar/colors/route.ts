@@ -8,7 +8,7 @@ export async function PATCH(request: NextRequest) {
     const session = await requireAuth();
 
     const body = await request.json();
-    const { shirtColor, pantsColor, hairColor } = body;
+    const { shirtColor, pantsColor, hairColor, skinColor } = body;
 
     // Validate colors are valid hex strings
     const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
@@ -21,6 +21,9 @@ export async function PATCH(request: NextRequest) {
     if (hairColor && !hexColorRegex.test(hairColor)) {
       return errorResponse("Invalid hair color format. Use hex (e.g. #4A3728)", 400);
     }
+    if (skinColor && !hexColorRegex.test(skinColor)) {
+      return errorResponse("Invalid skin color format. Use hex (e.g. #E8C4A0)", 400);
+    }
 
     const user = await prisma.user.update({
       where: { id: session.id },
@@ -28,12 +31,14 @@ export async function PATCH(request: NextRequest) {
         ...(shirtColor !== undefined && { avatarShirtColor: shirtColor }),
         ...(pantsColor !== undefined && { avatarPantsColor: pantsColor }),
         ...(hairColor !== undefined && { avatarHairColor: hairColor }),
+        ...(skinColor !== undefined && { avatarSkinColor: skinColor }),
       },
       select: {
         id: true,
         avatarShirtColor: true,
         avatarPantsColor: true,
         avatarHairColor: true,
+        avatarSkinColor: true,
       },
     });
 

@@ -38,6 +38,7 @@ model User {
   avatarShirtColor   String   @default("#3D5A45")
   avatarPantsColor   String   @default("#2D4635")
   avatarHairColor    String   @default("#4A3728")
+  avatarSkinColor    String   @default("#E8C4A0")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

@@ -65,11 +65,12 @@ interface AvatarCompanionProps {
   shirtColor?: string;
   pantsColor?: string;
   hairColor?: string;
+  skinColor?: string;
 }
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-export function AvatarCompanionInner({ avatarUrl, shirtColor, pantsColor, hairColor }: AvatarCompanionProps) {
+export function AvatarCompanionInner({ avatarUrl, shirtColor, pantsColor, hairColor, skinColor }: AvatarCompanionProps) {
   const { state } = useAvatarActivity();
   const containerRef = useRef<HTMLDivElement>(null!);
   const [mounted, setMounted] = useState(false);
@@ -223,6 +224,7 @@ export function AvatarCompanionInner({ avatarUrl, shirtColor, pantsColor, hairCo
             shirtColor={shirtColor}
             pantsColor={pantsColor}
             hairColor={hairColor}
+            skinColor={skinColor}
           />
 
           <ContactShadows

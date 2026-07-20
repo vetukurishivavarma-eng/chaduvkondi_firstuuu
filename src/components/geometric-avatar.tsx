@@ -18,7 +18,6 @@ import { DEFAULT_OUTFIT_COLORS } from "@/lib/avatar-defaults";
 // ─── Default fallback palette ──────────────────────────────────────────────
 
 const DEFAULT_COLORS = {
-  skin: "#E8C4A0",
   ...DEFAULT_OUTFIT_COLORS,
   shoes: "#2B2925",
   eyeWhite: "#F5F0E8",
@@ -34,6 +33,7 @@ interface GeometricAvatarProps {
   shirtColor?: string;
   pantsColor?: string;
   hairColor?: string;
+  skinColor?: string;
 }
 
 // ─── Smooth state blend helper ─────────────────────────────────────────────
@@ -124,7 +124,7 @@ const HEAD_D = 0.38;
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, hairColor }: GeometricAvatarProps) {
+export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, hairColor, skinColor }: GeometricAvatarProps) {
   const groupRef = useRef<THREE.Group>(null!);
   const headGroupRef = useRef<THREE.Group>(null!);
   const leftArmRef = useRef<THREE.Group>(null!);
@@ -142,7 +142,7 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     pants: new ColorAnimator(pantsColor || DEFAULT_COLORS.pants),
     hair: new ColorAnimator(hairColor || DEFAULT_COLORS.hair),
     shoes: new ColorAnimator(DEFAULT_COLORS.shoes),
-    skin: new ColorAnimator(DEFAULT_COLORS.skin),
+    skin: new ColorAnimator(skinColor || DEFAULT_COLORS.skin),
   });
 
   // Sync targets when props change
@@ -150,7 +150,8 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     animRef.current.shirt.setTarget(shirtColor || DEFAULT_COLORS.shirt);
     animRef.current.pants.setTarget(pantsColor || DEFAULT_COLORS.pants);
     animRef.current.hair.setTarget(hairColor || DEFAULT_COLORS.hair);
-  }, [shirtColor, pantsColor, hairColor]);
+    animRef.current.skin.setTarget(skinColor || DEFAULT_COLORS.skin);
+  }, [shirtColor, pantsColor, hairColor, skinColor]);
 
   // ── Material refs for the color-animated meshes ───────────────────
   const matTorso = useRef<THREE.MeshStandardMaterial>(null!);

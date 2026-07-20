@@ -31,6 +31,7 @@ export async function GET() {
       avatarShirtColor: user?.avatarShirtColor ?? DEFAULT_OUTFIT_COLORS.shirt,
       avatarPantsColor: user?.avatarPantsColor ?? DEFAULT_OUTFIT_COLORS.pants,
       avatarHairColor: user?.avatarHairColor ?? DEFAULT_OUTFIT_COLORS.hair,
+      avatarSkinColor: user?.avatarSkinColor ?? DEFAULT_OUTFIT_COLORS.skin,
       overallScore,
       conceptsCount: masteryScores.length,
       tier: user?.tier,
