@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Sparkles, SkipForward, Upload } from "lucide-react";
 import { imageFileToBase64 } from "@/lib/image-to-base64";
+import { fetchJson } from "@/lib/fetch-json";
 
 export default function OnboardingAvatarPage() {
   const router = useRouter();
@@ -58,13 +59,11 @@ export default function OnboardingAvatarPage() {
       // Resize & convert to base64 on the client side (no disk writes needed)
       const avatarDataUrl = await imageFileToBase64(selectedFile);
 
-      const res = await fetch("/api/user/avatar/upload", {
+      const data = await fetchJson("/api/user/avatar/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avatarDataUrl }),
       });
-
-      const data = await res.json();
 
       if (!data.success) {
         setError(data.error || "Failed to upload avatar");

@@ -8,30 +8,34 @@ export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth();
 
-    const { avatarDataUrl } = await request.json();
+    // Parse body with explicit error for malformed JSON
+    let avatarDataUrl: string;
+    try {
+      const body = await request.json();
+      avatarDataUrl = body.avatarDataUrl;
+    } catch {
+      return errorResponse("Invalid JSON in request body", 400);
+    }
 
     if (!avatarDataUrl || typeof avatarDataUrl !== "string") {
       return errorResponse("avatarDataUrl is required and must be a string", 400);
     }
 
-    // Validate it's a valid data URL
     if (!avatarDataUrl.startsWith("data:image/")) {
       return errorResponse("Invalid image data URL", 400);
     }
 
-    // Validate max size (data URLs are ~33% larger than binary, allow ~6MB)
-    const approxBytes = (avatarDataUrl.length * 3) / 4;
-    if (approxBytes > 6 * 1024 * 1024) {
-      return errorResponse("Image must be less than 5MB", 400);
+    if (avatarDataUrl.length > 2 * 1024 * 1024) {
+      return errorResponse("Image too large. Please use a smaller image.", 400);
     }
 
-    // Fetch current avatar URL to clean up old file if switching from local upload
+    // Fetch current avatar URL to clean up old file
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
       select: { avatarUrl: true },
     });
 
-    // Save base64 data URL directly to database (serverless-safe, no disk writes)
+    // Save base64 data URL directly to database (serverless-safe)
     await prisma.user.update({
       where: { id: session.id },
       data: {

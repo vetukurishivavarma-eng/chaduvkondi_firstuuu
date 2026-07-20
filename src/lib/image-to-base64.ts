@@ -3,14 +3,14 @@
  * Avoids writing to disk (serverless-safe) and keeps avatar sizes small.
  *
  * @param file - The image File from an <input type="file">
- * @param maxDimension - Max width/height in px (default 300)
- * @param quality - JPEG/WebP quality 0-1 (default 0.7)
+ * @param maxDimension - Max width/height in px (default 200 — kept small for Vercel)
+ * @param quality - JPEG/WebP quality 0-1 (default 0.6)
  * @returns A data URL string like "data:image/jpeg;base64,..."
  */
 export function imageFileToBase64(
   file: File,
-  maxDimension = 300,
-  quality = 0.7
+  maxDimension = 200,
+  quality = 0.6
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     // Validate type
