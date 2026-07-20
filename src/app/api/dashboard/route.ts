@@ -123,6 +123,7 @@ export async function GET() {
           name: user?.name || session.name,
           email: session.email,
           tier: user?.tier || null,
+          avatarUrl: user?.avatarUrl || null,
         },
         stats: {
           overallScore,

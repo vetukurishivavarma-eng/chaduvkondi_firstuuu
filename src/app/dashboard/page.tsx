@@ -15,10 +15,12 @@ import {
   BarChart3,
   Zap,
   BookOpen,
+  Sparkles,
+  X,
 } from "lucide-react";
 
 interface DashboardData {
-  user: { name: string; email: string; tier: { name: string; color: string; icon: string } | null };
+  user: { name: string; email: string; tier: { name: string; color: string; icon: string } | null; avatarUrl?: string | null };
   stats: {
     overallScore: number;
     conceptsMastered: number;
@@ -37,6 +39,10 @@ interface DashboardData {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    // Lazy initializer - avoids flash on re-mount
+    () => sessionStorage.getItem("avatarBannerDismissed") === "true"
+  );
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -44,6 +50,11 @@ export default function DashboardPage() {
       .then((res) => { if (res.success) setData(res.data); })
       .finally(() => setLoading(false));
   }, []);
+
+  function dismissBanner() {
+    setBannerDismissed(true);
+    sessionStorage.setItem("avatarBannerDismissed", "true");
+  }
 
   if (loading) {
     return (
@@ -71,6 +82,34 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      {/* Avatar reminder banner */}
+      {!data.user.avatarUrl && !bannerDismissed && (
+        <div className="relative flex items-start gap-3 p-4 rounded-lg border border-[var(--secondary)]/30 bg-[var(--secondary)]/5 animate-fade-in">
+          <div className="shrink-0 w-9 h-9 rounded-md bg-[var(--secondary)]/20 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-[var(--secondary)]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-[var(--foreground)]">Set up your avatar</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Upload a profile photo so your avatar companion can appear on the dashboard.
+            </p>
+            <Link href="/profile" onClick={dismissBanner}>
+              <Button size="sm" variant="link" className="h-auto p-0 mt-1.5 text-xs font-medium text-[var(--secondary)] hover:text-[var(--secondary-light)]">
+                Upload Photo
+                <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          <button
+            onClick={dismissBanner}
+            className="shrink-0 p-1 rounded-md hover:bg-[var(--soft)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
