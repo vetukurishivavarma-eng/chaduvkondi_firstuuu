@@ -162,6 +162,11 @@ function QuizContent() {
             result: data.data,
           },
         ]);
+
+        // 🎉 Trigger avatar celebration on correct answer
+        if (data.data.isCorrect) {
+          window.dispatchEvent(new CustomEvent("avatar-celebrate"));
+        }
       }
     } catch {
       setAnswers((prev) => [

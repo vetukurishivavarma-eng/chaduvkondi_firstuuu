@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type AvatarState = "typing" | "active" | "idle";
+export type AvatarState = "typing" | "active" | "idle" | "celebrate";
 
 interface AvatarActivityContextValue {
   /** Current classified avatar state */
@@ -19,6 +19,8 @@ interface AvatarActivityContextValue {
   lastActivityAt: number;
   /** Manually set a state (for testing or override) */
   setOverrideState: (state: AvatarState | null) => void;
+  /** Trigger a celebration animation that auto-resets after 2.5s */
+  celebrate: () => void;
 }
 
 const AvatarActivityContext = createContext<AvatarActivityContextValue | null>(
@@ -33,6 +35,7 @@ export function useAvatarActivity() {
       state: "active" as AvatarState,
       lastActivityAt: Date.now(),
       setOverrideState: () => {},
+      celebrate: () => {},
     };
   }
   return ctx;
@@ -139,12 +142,40 @@ export function AvatarActivityProvider({ children }: { children: ReactNode }) {
     };
   }, [state, overrideState, lastActivityAt]);
 
+  // ─── Celebration trigger ──────────────────────────────────────────────
+  const celebrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const celebrate = useCallback(() => {
+    setState("celebrate");
+    // Auto-reset back to active after 2.5 seconds
+    if (celebrateTimerRef.current) clearTimeout(celebrateTimerRef.current);
+    celebrateTimerRef.current = setTimeout(() => {
+      setState("active");
+      setLastActivityAt(Date.now());
+    }, 2500);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (celebrateTimerRef.current) clearTimeout(celebrateTimerRef.current);
+    };
+  }, []);
+
+  // Listen for custom 'avatar-celebrate' DOM events (fired by quiz page etc.)
+  useEffect(() => {
+    const handler = () => celebrate();
+    window.addEventListener("avatar-celebrate", handler);
+    return () => window.removeEventListener("avatar-celebrate", handler);
+  }, [celebrate]);
+
   return (
     <AvatarActivityContext.Provider
       value={{
         state,
         lastActivityAt,
         setOverrideState,
+        celebrate,
       }}
     >
       {children}

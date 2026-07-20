@@ -26,7 +26,7 @@ export interface AnimationFrame {
   rightElbow: number;
 }
 
-export type AnimState = "idle" | "walk" | "typing" | "sleep";
+export type AnimState = "idle" | "walk" | "typing" | "sleep" | "celebrate";
 
 /**
  * Generate animation frame for a given state at time `t` (seconds).
@@ -97,6 +97,22 @@ export function getAnimationFrame(state: AnimState, t: number): AnimationFrame {
         leftElbow: 0.3,
         rightElbow: 0.3,
       };
+
+    // ── CELEBRATE: Jump, arms up, spin, then land ────────────────────
+    case "celebrate":
+      return {
+        bodyY: Math.abs(Math.sin(t * 6.0)) * 0.12 + Math.sin(t * 12.0) * 0.02,
+        bodyRotZ: Math.sin(t * 3.0) * 0.1,
+        headTilt: Math.sin(t * 4.0) * 0.1,
+        leftArm: -1.2 + Math.sin(t * 8.0) * 0.15,  // arms way up!
+        rightArm: -1.2 + Math.sin(t * 8.0 + 0.5) * 0.15,
+        leftArmZ: 0.4,
+        rightArmZ: -0.4,
+        leftLeg: Math.sin(t * 6.0) * 0.1,
+        rightLeg: Math.sin(t * 6.0 + Math.PI) * 0.1,
+        leftElbow: 0.8 + Math.sin(t * 10.0) * 0.1,
+        rightElbow: 0.8 + Math.sin(t * 10.0 + 0.3) * 0.1,
+      };
   }
 }
 
@@ -126,8 +142,9 @@ export function blendFrames(a: AnimationFrame, b: AnimationFrame, t: number): An
  */
 export function avatarStateToAnim(state: string): AnimState {
   switch (state) {
-    case "typing": return "typing";
-    case "idle":   return "sleep";    // sleep when idle for 35s
-    default:       return "idle";     // active / browsing
+    case "celebrate": return "celebrate";
+    case "typing":    return "typing";
+    case "idle":      return "sleep";    // sleep when idle for 35s
+    default:          return "idle";     // active / browsing
   }
 }

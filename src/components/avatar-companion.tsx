@@ -57,6 +57,7 @@ const STATUS_COLORS: Record<AvatarState, string> = {
   typing: "#10B981",
   active: "#3D5A45",
   idle: "#9C9A94",
+  celebrate: "#F59E0B",
 };
 
 interface AvatarCompanionProps {
