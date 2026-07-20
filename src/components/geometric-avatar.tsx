@@ -114,6 +114,16 @@ class ColorAnimator {
   }
 }
 
+// ─── Breathing ────────────────────────────────────────────────────────────
+
+const BREATH: Record<AnimState, { rate: number; amp: number }> = {
+  sleep:     { rate: 0.25, amp: 0.035 }, // deep slow breaths
+  idle:      { rate: 0.30, amp: 0.022 }, // normal resting
+  walk:      { rate: 0.50, amp: 0.028 }, // slightly faster, deeper
+  typing:    { rate: 0.35, amp: 0.012 }, // shallow, tense
+  celebrate: { rate: 0.45, amp: 0.030 }, // excited, faster
+};
+
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const R = 0.06;
@@ -133,6 +143,7 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
   const rightLegRef = useRef<THREE.Group>(null!);
   const leftForearmRef = useRef<THREE.Mesh>(null!);
   const rightForearmRef = useRef<THREE.Mesh>(null!);
+  const torsoGroupRef = useRef<THREE.Group>(null!);
 
   const blenderRef = useRef(new AnimationBlender());
 
@@ -261,14 +272,24 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     a.hair.tick(delta);
     a.shoes.tick(delta);
     a.skin.tick(delta);
+
+    // ── Breathing ──────────────────────────────────────────────
+    if (torsoGroupRef.current) {
+      const b = BREATH[animState];
+      const breath = Math.sin(t * b.rate * Math.PI * 2) * b.amp;
+      torsoGroupRef.current.scale.y = 1 + breath;
+      torsoGroupRef.current.scale.x = 1 + breath * 0.3;
+    }
   });
 
   return (
     <group ref={groupRef} scale={1.3} position={[0, -0.35, 0]}>
       {/* ── Body (torso) ─────────────────────────────────────────────── */}
-      <RoundedBox args={[0.52, 0.58, 0.28]} radius={R} smoothness={3}>
-        <meshStandardMaterial ref={matTorso} roughness={0.7} />
-      </RoundedBox>
+      <group ref={torsoGroupRef}>
+        <RoundedBox args={[0.52, 0.58, 0.28]} radius={R} smoothness={3}>
+          <meshStandardMaterial ref={matTorso} roughness={0.7} />
+        </RoundedBox>
+      </group>
 
       {/* Collar detail */}
       <mesh position={[0, 0.33, 0.15]}>
