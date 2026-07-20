@@ -62,11 +62,14 @@ const STATUS_COLORS: Record<AvatarState, string> = {
 
 interface AvatarCompanionProps {
   avatarUrl: string | null;
+  shirtColor?: string;
+  pantsColor?: string;
+  hairColor?: string;
 }
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-export function AvatarCompanionInner({ avatarUrl }: AvatarCompanionProps) {
+export function AvatarCompanionInner({ avatarUrl, shirtColor, pantsColor, hairColor }: AvatarCompanionProps) {
   const { state } = useAvatarActivity();
   const containerRef = useRef<HTMLDivElement>(null!);
   const [mounted, setMounted] = useState(false);
@@ -214,7 +217,13 @@ export function AvatarCompanionInner({ avatarUrl }: AvatarCompanionProps) {
           <directionalLight position={[-3, 4, -2]} intensity={0.3} />
           <spotLight position={[0, 3, 4]} angle={0.3} intensity={0.4} penumbra={1} />
 
-          <GeometricAvatar photoDataUrl={avatarUrl} state={state} />
+          <GeometricAvatar
+            photoDataUrl={avatarUrl}
+            state={state}
+            shirtColor={shirtColor}
+            pantsColor={pantsColor}
+            hairColor={hairColor}
+          />
 
           <ContactShadows
             position={[0, -0.55, 0]}

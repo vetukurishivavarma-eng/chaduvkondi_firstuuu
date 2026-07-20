@@ -12,14 +12,14 @@ import {
   type AnimState,
 } from "@/lib/avatar-animations";
 
-// ─── Body part color palette ───────────────────────────────────────────────
+import { DEFAULT_OUTFIT_COLORS } from "@/lib/avatar-defaults";
 
-const COLORS = {
+// ─── Default fallback palette (used when no custom colors provided) ─────────
+
+const DEFAULT_COLORS = {
   skin: "#E8C4A0",
-  shirt: "#3D5A45",
-  pants: "#2D4635",
+  ...DEFAULT_OUTFIT_COLORS,
   shoes: "#2B2925",
-  hair: "#4A3728",
 };
 
 // ─── Props ─────────────────────────────────────────────────────────────────
@@ -27,6 +27,9 @@ const COLORS = {
 interface GeometricAvatarProps {
   photoDataUrl: string | null;
   state: AvatarState;
+  shirtColor?: string;
+  pantsColor?: string;
+  hairColor?: string;
 }
 
 // ─── Smooth state blend helper ─────────────────────────────────────────────
@@ -60,7 +63,7 @@ class AnimationBlender {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
+export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, hairColor }: GeometricAvatarProps) {
   const groupRef = useRef<THREE.Group>(null!);
   const headRef = useRef<THREE.Group>(null!);
   const leftArmRef = useRef<THREE.Group>(null!);
@@ -71,6 +74,15 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
   const rightElbowRef = useRef<THREE.Mesh>(null!);
 
   const blenderRef = useRef(new AnimationBlender());
+
+  // Resolve colors, falling back to defaults
+  const colors = useMemo(() => ({
+    skin: DEFAULT_COLORS.skin,
+    shirt: shirtColor || DEFAULT_COLORS.shirt,
+    pants: pantsColor || DEFAULT_COLORS.pants,
+    shoes: DEFAULT_COLORS.shoes,
+    hair: hairColor || DEFAULT_COLORS.hair,
+  }), [shirtColor, pantsColor, hairColor]);
 
   // Load photo texture
   const texture = useMemo(() => {
@@ -132,7 +144,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
       {/* Body (torso) */}
       <mesh position={[0, 0.5, 0]}>
         <boxGeometry args={[0.5, 0.6, 0.3]} />
-        <meshStandardMaterial color={COLORS.shirt} />
+        <meshStandardMaterial color={colors.shirt} />
       </mesh>
 
       {/* Head group (for tilting) */}
@@ -140,14 +152,14 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
         <mesh>
           <boxGeometry args={[0.38, 0.4, 0.35]} />
           <meshStandardMaterial
-            color={COLORS.skin}
+            color={colors.skin}
             map={texture || undefined}
           />
         </mesh>
         {/* Hair cap */}
         <mesh position={[0, 0.22, 0]}>
           <boxGeometry args={[0.4, 0.12, 0.37]} />
-          <meshStandardMaterial color={COLORS.hair} />
+          <meshStandardMaterial color={colors.hair} />
         </mesh>
         {/* Eyes */}
         <mesh position={[-0.12, 0.05, 0.18]}>
@@ -164,7 +176,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
       <group ref={leftArmRef} position={[-0.35, 0.65, 0]}>
         <mesh ref={leftElbowRef} position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.4, 0.12]} />
-          <meshStandardMaterial color={COLORS.skin} />
+          <meshStandardMaterial color={colors.skin} />
         </mesh>
       </group>
 
@@ -172,7 +184,7 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
       <group ref={rightArmRef} position={[0.35, 0.65, 0]}>
         <mesh ref={rightElbowRef} position={[0, -0.25, 0]}>
           <boxGeometry args={[0.12, 0.4, 0.12]} />
-          <meshStandardMaterial color={COLORS.skin} />
+          <meshStandardMaterial color={colors.skin} />
         </mesh>
       </group>
 
@@ -180,11 +192,11 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
       <group ref={leftLegRef} position={[-0.12, 0.15, 0]}>
         <mesh position={[0, -0.25, 0]}>
           <boxGeometry args={[0.14, 0.35, 0.14]} />
-          <meshStandardMaterial color={COLORS.pants} />
+          <meshStandardMaterial color={colors.pants} />
         </mesh>
         <mesh position={[0, -0.42, 0.03]}>
           <boxGeometry args={[0.16, 0.08, 0.22]} />
-          <meshStandardMaterial color={COLORS.shoes} />
+          <meshStandardMaterial color={colors.shoes} />
         </mesh>
       </group>
 
@@ -192,11 +204,11 @@ export function GeometricAvatar({ photoDataUrl, state }: GeometricAvatarProps) {
       <group ref={rightLegRef} position={[0.12, 0.15, 0]}>
         <mesh position={[0, -0.25, 0]}>
           <boxGeometry args={[0.14, 0.35, 0.14]} />
-          <meshStandardMaterial color={COLORS.pants} />
+          <meshStandardMaterial color={colors.pants} />
         </mesh>
         <mesh position={[0, -0.42, 0.03]}>
           <boxGeometry args={[0.16, 0.08, 0.22]} />
-          <meshStandardMaterial color={COLORS.shoes} />
+          <meshStandardMaterial color={colors.shoes} />
         </mesh>
       </group>
     </group>

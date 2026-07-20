@@ -33,8 +33,11 @@ model User {
   tierId           String?
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
-  avatarUrl        String?
-  avatarCreatedAt  DateTime?
+  avatarUrl          String?
+  avatarCreatedAt    DateTime?
+  avatarShirtColor   String   @default("#3D5A45")
+  avatarPantsColor   String   @default("#2D4635")
+  avatarHairColor    String   @default("#4A3728")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

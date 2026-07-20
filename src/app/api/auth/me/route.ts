@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { successResponse, errorResponse, handleApiError } from "@/lib/api-helpers";
 import { calculateOverallMastery } from "@/lib/utils";
+import { DEFAULT_OUTFIT_COLORS } from "@/lib/avatar-defaults";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -27,6 +28,9 @@ export async function GET() {
       ...session,
       avatarUrl: user?.avatarUrl ?? null,
       avatarCreatedAt: user?.avatarCreatedAt?.toISOString() ?? null,
+      avatarShirtColor: user?.avatarShirtColor ?? DEFAULT_OUTFIT_COLORS.shirt,
+      avatarPantsColor: user?.avatarPantsColor ?? DEFAULT_OUTFIT_COLORS.pants,
+      avatarHairColor: user?.avatarHairColor ?? DEFAULT_OUTFIT_COLORS.hair,
       overallScore,
       conceptsCount: masteryScores.length,
       tier: user?.tier,

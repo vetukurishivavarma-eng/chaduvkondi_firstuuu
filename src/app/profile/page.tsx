@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Sparkles, Trash2, ArrowLeft, User, Upload, Link as LinkIcon } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ArrowLeft, User, Upload, Link as LinkIcon, Palette } from "lucide-react";
 import { imageFileToBase64 } from "@/lib/image-to-base64";
 import { fetchJson } from "@/lib/fetch-json";
+import { DEFAULT_OUTFIT_COLORS } from "@/lib/avatar-defaults";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -21,20 +22,31 @@ export default function ProfilePage() {
     role: string;
     avatarUrl: string | null;
     avatarCreatedAt: string | null;
+    avatarShirtColor?: string;
+    avatarPantsColor?: string;
+    avatarHairColor?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showUploader, setShowUploader] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
+  const [shirtColor, setShirtColor] = useState<string>(DEFAULT_OUTFIT_COLORS.shirt);
+  const [pantsColor, setPantsColor] = useState<string>(DEFAULT_OUTFIT_COLORS.pants);
+  const [hairColor, setHairColor] = useState<string>(DEFAULT_OUTFIT_COLORS.hair);
 
   // Fetch user data
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) setUser(data.data);
-        else router.push("/login");
+        if (data.success) {
+          setUser(data.data);
+          if (data.data.avatarShirtColor) setShirtColor(data.data.avatarShirtColor);
+          if (data.data.avatarPantsColor) setPantsColor(data.data.avatarPantsColor);
+          if (data.data.avatarHairColor) setHairColor(data.data.avatarHairColor);
+        } else router.push("/login");
       })
       .finally(() => setLoading(false));
   }, [router]);
@@ -74,6 +86,7 @@ export default function ProfilePage() {
         prev ? { ...prev, avatarUrl: data.data.avatarUrl, avatarCreatedAt: new Date().toISOString() } : prev
       );
       setShowUploader(false);
+      setShowColorPicker(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process image");
     } finally {
@@ -120,6 +133,68 @@ export default function ProfilePage() {
       setUser((prev) => prev ? { ...prev, avatarUrl: null, avatarCreatedAt: null } : prev);
     } catch {
       setError("Failed to remove avatar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveColors() {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/user/avatar/colors", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shirtColor, pantsColor, hairColor }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Failed to save colors");
+        return;
+      }
+      setUser((prev) =>
+        prev
+          ? { ...prev, avatarShirtColor: shirtColor, avatarPantsColor: pantsColor, avatarHairColor: hairColor }
+          : prev
+      );
+      setShowColorPicker(false);
+    } catch {
+      setError("Network error saving colors");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleResetColors() {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/user/avatar/colors", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shirtColor: DEFAULT_OUTFIT_COLORS.shirt,
+          pantsColor: DEFAULT_OUTFIT_COLORS.pants,
+          hairColor: DEFAULT_OUTFIT_COLORS.hair,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Failed to reset colors");
+        return;
+      }
+      // Only update local state after the server confirms success
+      setShirtColor(DEFAULT_OUTFIT_COLORS.shirt);
+      setPantsColor(DEFAULT_OUTFIT_COLORS.pants);
+      setHairColor(DEFAULT_OUTFIT_COLORS.hair);
+      setUser((prev) =>
+        prev
+          ? { ...prev, avatarShirtColor: DEFAULT_OUTFIT_COLORS.shirt, avatarPantsColor: DEFAULT_OUTFIT_COLORS.pants, avatarHairColor: DEFAULT_OUTFIT_COLORS.hair }
+          : prev
+      );
+      setShowColorPicker(false);
+    } catch {
+      setError("Network error resetting colors");
     } finally {
       setSaving(false);
     }
@@ -188,7 +263,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
             <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-            Avatar
+            Avatar & Outfit
           </CardTitle>
           <CardDescription>
             Your avatar appears on the dashboard and reacts to your activity — typing, browsing, or idle.
@@ -233,16 +308,27 @@ export default function ProfilePage() {
             </Button>
 
             {user.avatarUrl && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={removeAvatar}
-                disabled={saving}
-                className="gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Remove
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowColorPicker(!showColorPicker)}
+                  className="gap-1.5"
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  Customize Outfit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={removeAvatar}
+                  disabled={saving}
+                  className="gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Remove
+                </Button>
+              </>
             )}
           </div>
 
@@ -304,6 +390,117 @@ export default function ProfilePage() {
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Color Picker Section ───────────────────────────────────── */}
+          {showColorPicker && user.avatarUrl && (
+            <div className="space-y-4 pt-2 p-4 bg-[var(--soft)]/30 rounded-lg border border-[var(--border)]">
+              <h4 className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
+                <Palette className="w-4 h-4 text-[var(--primary)]" />
+                Outfit Colors
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Shirt color */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-[var(--muted)]">Shirt</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={shirtColor}
+                      onChange={(e) => setShirtColor(e.target.value)}
+                      className="w-9 h-9 rounded-md border border-[var(--border)] cursor-pointer bg-transparent p-0.5"
+                    />
+                    <Input
+                      value={shirtColor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) setShirtColor(val);
+                      }}
+                      placeholder="#3D5A45"
+                      className="font-mono text-xs h-9"
+                    />
+                  </div>
+                </div>
+
+                {/* Pants color */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-[var(--muted)]">Pants</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={pantsColor}
+                      onChange={(e) => setPantsColor(e.target.value)}
+                      className="w-9 h-9 rounded-md border border-[var(--border)] cursor-pointer bg-transparent p-0.5"
+                    />
+                    <Input
+                      value={pantsColor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) setPantsColor(val);
+                      }}
+                      placeholder="#2D4635"
+                      className="font-mono text-xs h-9"
+                    />
+                  </div>
+                </div>
+
+                {/* Hair color */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-[var(--muted)]">Hair</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={hairColor}
+                      onChange={(e) => setHairColor(e.target.value)}
+                      className="w-9 h-9 rounded-md border border-[var(--border)] cursor-pointer bg-transparent p-0.5"
+                    />
+                    <Input
+                      value={hairColor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) setHairColor(val);
+                      }}
+                      placeholder="#4A3728"
+                      className="font-mono text-xs h-9"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini preview with current colors */}
+              <div className="flex items-center gap-3 p-3 bg-[var(--background)] rounded-lg border border-[var(--border)]">
+                <div className="flex items-center gap-1">
+                  {/* Hair */}
+                  <div className="w-6 h-6 rounded-full border border-[var(--border)]" style={{ backgroundColor: hairColor }} />
+                  {/* Shirt */}
+                  <div className="w-6 h-6 rounded border border-[var(--border)]" style={{ backgroundColor: shirtColor }} />
+                  {/* Pants */}
+                  <div className="w-6 h-6 rounded border border-[var(--border)]" style={{ backgroundColor: pantsColor }} />
+                </div>
+                <span className="text-xs text-[var(--muted)]">Preview colors on your dashboard avatar</span>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSaveColors}
+                  disabled={saving}
+                  className="gap-1.5"
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  {saving ? "Saving..." : "Save Colors"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetColors}
+                  disabled={saving}
+                >
+                  Reset to Defaults
+                </Button>
               </div>
             </div>
           )}

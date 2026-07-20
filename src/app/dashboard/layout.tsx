@@ -23,6 +23,9 @@ interface User {
   email: string;
   role: string;
   avatarUrl?: string | null;
+  avatarShirtColor?: string;
+  avatarPantsColor?: string;
+  avatarHairColor?: string;
   overallScore?: number;
   conceptsCount?: number;
   tier?: { name: string; color: string; icon: string } | null;
@@ -205,7 +208,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Avatar Companion – dynamically loaded */}
-      <AvatarCompanionDynamic avatarUrl={user.avatarUrl ?? null} />
+      <AvatarCompanionDynamic
+        avatarUrl={user.avatarUrl ?? null}
+        shirtColor={user.avatarShirtColor}
+        pantsColor={user.avatarPantsColor}
+        hairColor={user.avatarHairColor}
+      />
     </div>
     </AvatarActivityProvider>
   );
