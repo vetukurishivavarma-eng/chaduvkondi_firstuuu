@@ -25,6 +25,8 @@ export async function GET() {
 
     return successResponse({
       ...session,
+      avatarUrl: user?.avatarUrl ?? null,
+      avatarCreatedAt: user?.avatarCreatedAt?.toISOString() ?? null,
       overallScore,
       conceptsCount: masteryScores.length,
       tier: user?.tier,

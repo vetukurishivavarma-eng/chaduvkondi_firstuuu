@@ -48,8 +48,8 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-2 text-[#9C9A94]">
-          <div className="w-5 h-5 border-2 border-[#3D5A45] border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-[var(--muted)]">
+          <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading dashboard...</span>
         </div>
       </div>
@@ -59,8 +59,8 @@ export default function DashboardPage() {
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-10 h-10 text-[#9C9A94]" />
-        <p className="text-[#9C9A94] text-sm">Could not load dashboard data.</p>
+        <AlertCircle className="w-10 h-10 text-[var(--muted)]" />
+        <p className="text-[var(--muted)] text-sm">Could not load dashboard data.</p>
         <Button onClick={() => window.location.reload()} variant="outline" size="sm">Try Again</Button>
       </div>
     );
@@ -74,10 +74,10 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight text-[#2B2925]">
+          <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight text-[var(--foreground)]">
             Welcome back, {data.user.name.split(" ")[0]}
           </h1>
-          <p className="text-sm text-[#9C9A94] mt-0.5">
+          <p className="text-sm text-[var(--muted)] mt-0.5">
             {spacedDue > 0
               ? `${spacedDue} concept${spacedDue > 1 ? "s" : ""} due for review`
               : "You're all caught up! Take a practice quiz to keep learning."}
@@ -94,7 +94,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-1.5">
             <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">Overall Mastery</CardDescription>
-            <CardTitle className="text-2xl">{stats.overallScore}%</CardTitle>
+            <CardTitle className="text-2xl text-[var(--foreground)]">{stats.overallScore}%</CardTitle>
           </CardHeader>
           <CardContent>
             <Progress value={stats.overallScore} className="h-1.5" />
@@ -105,31 +105,31 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-1.5">
             <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">Mastered</CardDescription>
-            <CardTitle className="text-2xl">{stats.conceptsMastered}<span className="text-sm text-[#9C9A94] font-normal"> / {stats.totalConcepts}</span></CardTitle>
+            <CardTitle className="text-2xl text-[var(--foreground)]">{stats.conceptsMastered}<span className="text-sm text-[var(--muted)] font-normal"> / {stats.totalConcepts}</span></CardTitle>
           </CardHeader>
           <CardContent>
             <Progress value={(stats.conceptsMastered / stats.totalConcepts) * 100} className="h-1.5" />
-            <p className="text-xs text-[#9C9A94] mt-1.5">{Math.round((stats.conceptsMastered / stats.totalConcepts) * 100)}% of concepts</p>
+            <p className="text-xs text-[var(--muted)] mt-1.5">{Math.round((stats.conceptsMastered / stats.totalConcepts) * 100)}% of concepts</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-1.5">
             <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">{stats.nextTier ? `Next: ${stats.nextTier.name}` : "Max Tier"}</CardDescription>
-            <CardTitle className="text-2xl">{stats.nextTier ? `${Math.round(stats.tierProgress)}%` : "—"}</CardTitle>
+            <CardTitle className="text-2xl text-[var(--foreground)]">{stats.nextTier ? `${Math.round(stats.tierProgress)}%` : "—"}</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats.nextTier && <><Progress value={stats.tierProgress} className="h-1.5" /><p className="text-xs text-[#9C9A94] mt-1.5">{Math.round(100 - stats.tierProgress)}% to {stats.nextTier.name}</p></>}
+            {stats.nextTier && <><Progress value={stats.tierProgress} className="h-1.5" /><p className="text-xs text-[var(--muted)] mt-1.5">{Math.round(100 - stats.tierProgress)}% to {stats.nextTier.name}</p></>}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-1.5">
             <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">Streak</CardDescription>
-            <CardTitle className="text-2xl">{stats.currentStreak}<span className="text-sm text-[#9C9A94] font-normal"> days</span></CardTitle>
+            <CardTitle className="text-2xl text-[var(--foreground)]">{stats.currentStreak}<span className="text-sm text-[var(--muted)] font-normal"> days</span></CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-[#9C9A94] mt-1.5">{stats.totalQuizzes} quiz{stats.totalQuizzes !== 1 ? "zes" : ""} completed</p>
+            <p className="text-xs text-[var(--muted)] mt-1.5">{stats.totalQuizzes} quiz{stats.totalQuizzes !== 1 ? "zes" : ""} completed</p>
           </CardContent>
         </Card>
       </div>
@@ -138,14 +138,14 @@ export default function DashboardPage() {
         {/* Sub-Domain Scores */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="w-4 h-4 text-[#3D5A45]" />Sub-Domain Mastery</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><BarChart3 className="w-4 h-4 text-[var(--primary)]" />Sub-Domain Mastery</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {subDomainScores.map((sd) => (
               <div key={sd.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-[#2B2925]">{sd.name}</span>
-                  <span className="text-[#9C9A94]">{sd.score}%</span>
+                  <span className="font-medium text-[var(--foreground)]">{sd.name}</span>
+                  <span className="text-[var(--muted)]">{sd.score}%</span>
                 </div>
                 <Progress value={sd.score} className="h-1.5" />
               </div>
@@ -157,21 +157,21 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="w-4 h-4 text-[#C08A3E]" />Focus Areas</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><AlertCircle className="w-4 h-4 text-[var(--secondary)]" />Focus Areas</CardTitle>
               <CardDescription>Concepts needing the most attention</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {weakConcepts.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-6 text-center">
-                  <CheckCircle2 className="w-7 h-7 text-[#3D5A45]" />
-                  <p className="text-sm text-[#9C9A94]">No weak concepts!</p>
+                  <CheckCircle2 className="w-7 h-7 text-[var(--primary)]" />
+                  <p className="text-sm text-[var(--muted)]">No weak concepts!</p>
                 </div>
               ) : (
                 weakConcepts.slice(0, 3).map((concept) => (
-                  <div key={concept.id} className="flex items-center justify-between p-2.5 bg-[#EDE9DF]/50 rounded-md">
+                  <div key={concept.id} className="flex items-center justify-between p-2.5 bg-[var(--soft)]/50 rounded-md">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate text-[#2B2925]">{concept.name}</p>
-                      <p className="text-xs text-[#9C9A94]">{concept.subDomain}</p>
+                      <p className="text-sm font-medium truncate text-[var(--foreground)]">{concept.name}</p>
+                      <p className="text-xs text-[var(--muted)]">{concept.subDomain}</p>
                     </div>
                     <Badge variant={concept.score < 30 ? "destructive" : concept.score < 50 ? "warning" : "secondary"}>{concept.score}%</Badge>
                   </div>
@@ -182,16 +182,16 @@ export default function DashboardPage() {
 
           {spacedDue > 0 && (
             <Link href="/quiz?mode=spaced">
-              <Card className="cursor-pointer card-lift border-[#3D5A45]/20 bg-[#3D5A45]/5">
+              <Card className="cursor-pointer card-lift border-[var(--primary)]/20 bg-[var(--primary)]/5">
                 <CardContent className="flex items-center gap-3 p-4">
-                  <div className="w-9 h-9 rounded-md bg-[#3D5A45] flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-[#F5F1E8]" />
+                  <div className="w-9 h-9 rounded-md bg-[var(--primary)] flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-[var(--background)]" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-heading font-semibold text-sm text-[#2B2925]">Review Due</p>
-                    <p className="text-xs text-[#9C9A94]">{spacedDue} concept{spacedDue > 1 ? "s" : ""} to review</p>
+                    <p className="font-heading font-semibold text-sm text-[var(--foreground)]">Review Due</p>
+                    <p className="text-xs text-[var(--muted)]">{spacedDue} concept{spacedDue > 1 ? "s" : ""} to review</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#9C9A94]" />
+                  <ArrowRight className="w-4 h-4 text-[var(--muted)]" />
                 </CardContent>
               </Card>
             </Link>
@@ -202,28 +202,28 @@ export default function DashboardPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Clock className="w-4 h-4 text-[#3D5A45]" />Recent Activity</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><Clock className="w-4 h-4 text-[var(--primary)]" />Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           {recentActivity.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <Brain className="w-8 h-8 text-[#E3DFD4]" />
-              <p className="text-sm text-[#9C9A94]">No activity yet</p>
+              <Brain className="w-8 h-8 text-[var(--border)]" />
+              <p className="text-sm text-[var(--muted)]">No activity yet</p>
               <Link href="/quiz/diagnostic"><Button size="sm" variant="outline" className="mt-1">Start Diagnostic</Button></Link>
             </div>
           ) : (
             <div className="space-y-2">
               {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-2.5 bg-[#EDE9DF]/30 rounded-md">
+                <div key={activity.id} className="flex items-center justify-between p-2.5 bg-[var(--soft)]/30 rounded-md">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-md bg-[#3D5A45]/10">
-                      {activity.type === "diagnostic" ? <Zap className="w-3.5 h-3.5 text-[#3D5A45]" /> :
-                       activity.type === "spaced_repetition" ? <BookOpen className="w-3.5 h-3.5 text-[#C08A3E]" /> :
-                       <Brain className="w-3.5 h-3.5 text-[#3D5A45]" />}
+                    <div className="flex items-center justify-center w-7 h-7 rounded-md bg-[var(--primary)]/10">
+                      {activity.type === "diagnostic" ? <Zap className="w-3.5 h-3.5 text-[var(--primary)]" /> :
+                       activity.type === "spaced_repetition" ? <BookOpen className="w-3.5 h-3.5 text-[var(--secondary)]" /> :
+                       <Brain className="w-3.5 h-3.5 text-[var(--primary)]" />}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#2B2925] capitalize">{activity.type.replace("_", " ")}</p>
-                      <p className="text-xs text-[#9C9A94]">{activity.conceptCount} concept{activity.conceptCount > 1 ? "s" : ""} • {new Date(activity.completedAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-[var(--foreground)] capitalize">{activity.type.replace("_", " ")}</p>
+                      <p className="text-xs text-[var(--muted)]">{activity.conceptCount} concept{activity.conceptCount > 1 ? "s" : ""} • {new Date(activity.completedAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                   {activity.score !== null && (

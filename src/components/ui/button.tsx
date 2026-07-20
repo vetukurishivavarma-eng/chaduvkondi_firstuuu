@@ -8,12 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#3D5A45] text-[#F5F1E8] hover:bg-[#4B6E55] shadow-sm hover:shadow-md border border-[#2D4635]",
-        destructive: "bg-[#B5533C] text-[#F5F1E8] hover:bg-[#CC6B54] shadow-sm border border-[#9A4630]",
-        outline: "border border-[#E3DFD4] bg-[#FAF8F4] text-[#2B2925] hover:bg-[#EDE9DF] hover:border-[#C08A3E]",
-        secondary: "bg-[#C08A3E] text-[#FAF8F4] hover:bg-[#D4A45A] shadow-sm border border-[#A6742A]",
-        ghost: "text-[#2B2925] hover:bg-[#EDE9DF] hover:text-[#3D5A45]",
-        link: "text-[#3D5A45] underline-offset-4 hover:underline decoration-[#C08A3E] decoration-2",
+        default: "bg-[var(--primary)] text-[var(--background)] hover:bg-[var(--primary-light)] shadow-sm hover:shadow-md border border-[var(--primary-dark)]",
+        destructive: "bg-[var(--error)] text-[var(--background)] hover:bg-[var(--error-light)] shadow-sm border border-[var(--error)]/60",
+        outline: "border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--soft)] hover:border-[var(--secondary)]",
+        secondary: "bg-[var(--secondary)] text-[var(--surface)] hover:bg-[var(--secondary-light)] shadow-sm border border-[var(--secondary)]/60",
+        ghost: "text-[var(--foreground)] hover:bg-[var(--soft)] hover:text-[var(--primary)]",
+        link: "text-[var(--primary)] underline-offset-4 hover:underline decoration-[var(--secondary)] decoration-2",
       },
       size: {
         default: "h-10 px-5 py-2",

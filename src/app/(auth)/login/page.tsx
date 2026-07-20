@@ -46,11 +46,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
       {/* Home */}
       <Link
         href="/"
-        className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#9C9A94] hover:text-[#3D5A45] hover:bg-[#EDE9DF] transition-all duration-150"
+        className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--soft)] transition-all duration-150"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Home</span>
@@ -58,8 +58,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm animate-fade-in">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-7 h-7 rounded-md bg-[#3D5A45]" />
-          <span className="font-heading font-semibold text-lg tracking-tight text-[#2B2925]">Chaduvkondi</span>
+          <div className="w-7 h-7 rounded-md bg-[var(--primary)]" />
+          <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
 
         <Card>
@@ -71,7 +71,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="p-2.5 text-sm bg-[#B5533C]/10 border border-[#B5533C]/20 text-[#B5533C] rounded-md">
+                <div className="p-2.5 text-sm bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] rounded-md">
                   {error}
                 </div>
               )}
@@ -94,7 +94,7 @@ export default function LoginPage() {
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs text-[#3D5A45] hover:underline"
+                    className="text-xs text-[var(--primary)] hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -113,7 +113,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9C9A94] hover:text-[#2B2925] transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -129,9 +129,9 @@ export default function LoginPage() {
                   "Sign In"
                 )}
               </Button>
-              <p className="text-sm text-center text-[#9C9A94]">
+              <p className="text-sm text-center text-[var(--muted)]">
                 Don&apos;t have an account?{" "}
-                <Link href="/signup" className="text-[#3D5A45] hover:underline font-medium">
+                <Link href="/signup" className="text-[var(--primary)] hover:underline font-medium">
                   Sign up
                 </Link>
               </p>

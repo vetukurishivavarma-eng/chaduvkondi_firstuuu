@@ -14,14 +14,14 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-lg border border-[#E3DFD4] bg-[#FAF8F4] px-3.5 py-2 text-sm text-[#2B2925] ring-offset-background placeholder:text-[#9C9A94] focus:outline-none focus:ring-2 focus:ring-[#3D5A45]/30 focus:border-[#3D5A45] transition-all disabled:cursor-not-allowed disabled:opacity-50",
+      "flex h-10 w-full items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm text-[var(--foreground)] ring-offset-background placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] transition-all disabled:cursor-not-allowed disabled:opacity-50",
       className
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 text-[#9C9A94]" />
+      <ChevronDown className="h-4 w-4 text-[var(--muted)]" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -35,7 +35,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-[#E3DFD4] bg-[#FAF8F4] shadow-lg animate-fade-in",
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg animate-fade-in",
         position === "popper" && "translate-y-1",
         className
       )}
@@ -62,14 +62,14 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-md py-2 pl-8 pr-2 text-sm text-[#2B2925] outline-none focus:bg-[#3D5A45]/10 focus:text-[#3D5A45] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+      "relative flex w-full cursor-default select-none items-center rounded-md py-2 pl-8 pr-2 text-sm text-[var(--foreground)] outline-none focus:bg-[var(--primary)]/10 focus:text-[var(--primary)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
       className
     )}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <div className="h-1.5 w-1.5 rounded-full bg-[#3D5A45]" />
+        <div className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

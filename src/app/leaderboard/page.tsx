@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,11 +14,9 @@ import {
   Users,
   Crown,
   Target,
-  ArrowUp,
-  ArrowDown,
-  Minus,
   Loader2,
-  Sparkles,
+  LayoutDashboard,
+  ArrowLeft,
 } from "lucide-react";
 
 interface LeaderboardEntry {
@@ -62,8 +61,8 @@ export default function LeaderboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-2 text-zinc-400">
-          <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-[var(--muted)]">
+          <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
           <span>Loading leaderboard...</span>
         </div>
       </div>
@@ -79,24 +78,27 @@ export default function LeaderboardPage() {
       case 3:
         return <Medal className="w-5 h-5 text-amber-700" />;
       default:
-        return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-zinc-400">{rank}</span>;
+        return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-[var(--muted)]">{rank}</span>;
     }
-  };
-
-  const getRankChange = (rank: number) => {
-    if (rank === 0) return null;
-    // Placeholder for future rank change tracking
-    return null;
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Leaderboard</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-          See how you stack up against other learners
-        </p>
+      {/* Header with Dashboard link */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--foreground)]">Leaderboard</h1>
+          <p className="text-[var(--muted)] mt-1">
+            See how you stack up against other learners
+          </p>
+        </div>
+        <Link href="/dashboard">
+          <Button variant="outline" size="sm" className="gap-2">
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+            <ArrowLeft className="w-3 h-3" />
+          </Button>
+        </Link>
       </div>
 
       {/* Current User Stats */}
@@ -109,10 +111,10 @@ export default function LeaderboardPage() {
                   <Trophy className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500">Your Rank</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-[var(--muted)]">Your Rank</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">
                     #{currentUser.rank}
-                    <span className="text-sm text-zinc-400 font-normal">
+                    <span className="text-sm text-[var(--muted)] font-normal">
                       {" "}of {currentUser.totalLearners}
                     </span>
                   </p>
@@ -124,8 +126,8 @@ export default function LeaderboardPage() {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500">Percentile</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-[var(--muted)]">Percentile</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">
                     {currentUser.percentile}%
                   </p>
                 </div>
@@ -136,15 +138,15 @@ export default function LeaderboardPage() {
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500">Your Score</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-[var(--muted)]">Your Score</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">
                     {currentUser.overallScore}%
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 text-center text-sm text-zinc-500">
+            <div className="mt-4 text-center text-sm text-[var(--muted)]">
               <span className="font-medium text-emerald-600 dark:text-emerald-400">
                 Ahead of {currentUser.percentile}% of learners
               </span>
@@ -157,8 +159,8 @@ export default function LeaderboardPage() {
       {/* Leaderboard Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="w-5 h-5 text-violet-600" />
+          <CardTitle className="flex items-center gap-2 text-lg text-[var(--foreground)]">
+            <Users className="w-5 h-5 text-[var(--primary)]" />
             Top Learners
           </CardTitle>
           <CardDescription>
@@ -168,14 +170,14 @@ export default function LeaderboardPage() {
         <CardContent>
           {leaderboard.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <Users className="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
-              <p className="text-zinc-500">No learners yet</p>
-              <p className="text-sm text-zinc-400">Be the first to take a quiz!</p>
+              <Users className="w-10 h-10 text-[var(--border)]" />
+              <p className="text-[var(--muted)]">No learners yet</p>
+              <p className="text-sm text-[var(--muted)]">Be the first to take a quiz!</p>
             </div>
           ) : (
             <div className="space-y-2">
               {/* Table Header */}
-              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
                 <div className="col-span-1">Rank</div>
                 <div className="col-span-4">Name</div>
                 <div className="col-span-2 text-center">Tier</div>
@@ -197,31 +199,31 @@ export default function LeaderboardPage() {
                     key={entry.id}
                     className={`grid grid-cols-2 md:grid-cols-12 gap-4 items-center p-4 rounded-xl transition-all duration-200 ${
                       entry.isCurrentUser
-                        ? "bg-violet-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent"
+                        ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
+                        : "hover:bg-[var(--soft)] border border-transparent"
                     }`}
                   >
                     {/* Rank */}
                     <div className="flex items-center gap-2 md:col-span-1">
                       {getRankIcon(entry.rank)}
                       {entry.rank <= 3 && (
-                        <span className="block md:hidden text-xs text-zinc-500">#{entry.rank}</span>
+                        <span className="block md:hidden text-xs text-[var(--muted)]">#{entry.rank}</span>
                       )}
                     </div>
 
                     {/* Name & Avatar */}
                     <div className="flex items-center gap-3 md:col-span-4 md:ml-0">
                       <Avatar className={`h-8 w-8 ${entry.isCurrentUser ? "ring-2 ring-emerald-400" : ""}`}>
-                        <AvatarFallback>{initials}</AvatarFallback>
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-medium text-[var(--foreground)]">
                           {entry.name}
                           {entry.isCurrentUser && (
                             <Badge variant="default" className="ml-2 text-[10px] py-0">You</Badge>
                           )}
                         </p>
-                        <p className="text-xs text-zinc-500 md:hidden">
+                        <p className="text-xs text-[var(--muted)] md:hidden">
                           {entry.overallScore}% • {entry.conceptsCount} concepts
                         </p>
                       </div>
@@ -242,17 +244,17 @@ export default function LeaderboardPage() {
 
                     {/* Score (hidden on mobile) */}
                     <div className="hidden md:flex md:col-span-2 justify-center">
-                      <span className="text-sm font-semibold">{entry.overallScore}%</span>
+                      <span className="text-sm font-semibold text-[var(--foreground)]">{entry.overallScore}%</span>
                     </div>
 
                     {/* Concepts (hidden on mobile) */}
                     <div className="hidden md:flex md:col-span-2 justify-center">
-                      <span className="text-sm text-zinc-500">{entry.conceptsCount}</span>
+                      <span className="text-sm text-[var(--muted)]">{entry.conceptsCount}</span>
                     </div>
 
                     {/* Accuracy (hidden on mobile) */}
                     <div className="hidden md:flex md:col-span-1 justify-center">
-                      <span className="text-sm text-zinc-500">{entry.correctRate}%</span>
+                      <span className="text-sm text-[var(--muted)]">{entry.correctRate}%</span>
                     </div>
                   </div>
                 );

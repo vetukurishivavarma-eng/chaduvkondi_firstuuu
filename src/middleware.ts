@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "chaduvkondi-super-secret-key-change-in-production";
 
-const protectedPaths = ["/dashboard", "/quiz", "/admin", "/leaderboard"];
+const protectedPaths = ["/dashboard", "/quiz", "/admin", "/leaderboard", "/onboarding", "/profile"];
 const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export async function middleware(request: NextRequest) {
@@ -45,5 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/quiz/:path*", "/admin/:path*", "/leaderboard/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/quiz/:path*", "/admin/:path*", "/leaderboard/:path*", "/onboarding/:path*", "/profile/:path*", "/login", "/signup"],
 };

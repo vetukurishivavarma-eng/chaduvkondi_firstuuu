@@ -33,28 +33,28 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-4">
-        <Link href="/" className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#9C9A94] hover:text-[#3D5A45] hover:bg-[#EDE9DF] transition-all duration-150">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
+        <Link href="/"        className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--soft)] transition-all duration-150">
           <ArrowLeft className="w-4 h-4" />
           <span>Home</span>
         </Link>
         <Card className="w-full max-w-sm animate-scale-in">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center mb-3">
-              <div className="w-12 h-12 rounded-full bg-[#3D5A45]/10 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-[#3D5A45]" />
+              <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-[var(--primary)]" />
               </div>
             </div>
             <CardTitle className="text-xl">Check your email</CardTitle>
             <CardDescription className="mt-2">
-              If an account exists with <span className="font-medium text-[#2B2925]">{email}</span>,
+              If an account exists with <span className="font-medium text-[var(--foreground)]">{email}</span>,
               we&apos;ve sent a password reset link. It expires in 1 hour.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-sm text-[#9C9A94]">
+            <p className="text-sm text-[var(--muted)]">
               Didn&apos;t receive it? Check your spam folder or{" "}
-              <button onClick={() => { setSent(false); setEmail(""); }} className="text-[#3D5A45] hover:underline font-medium">try again</button>
+              <button onClick={() => { setSent(false); setEmail(""); }} className="text-[var(--primary)] hover:underline font-medium">try again</button>
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-3 pt-2">
@@ -67,15 +67,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-4">
-      <Link href="/" className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#9C9A94] hover:text-[#3D5A45] hover:bg-[#EDE9DF] transition-all duration-150">
+      <Link href="/"        className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--soft)] transition-all duration-150">
         <ArrowLeft className="w-4 h-4" />
         <span>Home</span>
       </Link>
 
       <div className="w-full max-w-sm animate-fade-in">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-7 h-7 rounded-md bg-[#3D5A45]" />
-          <span className="font-heading font-semibold text-lg tracking-tight text-[#2B2925]">Chaduvkondi</span>
+          <div className="w-7 h-7 rounded-md bg-[var(--primary)]" />
+          <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
 
         <Card>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="flex items-start gap-2 p-2.5 text-sm bg-[#B5533C]/10 border border-[#B5533C]/20 text-[#B5533C] rounded-md">
+                <div className="flex items-start gap-2 p-2.5 text-sm bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] rounded-md">
                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                   <span>{error}</span>
                 </div>

@@ -44,8 +44,8 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-sm animate-scale-in">
         <CardHeader className="text-center pb-4">
           <div className="flex items-center justify-center mb-3">
-            <div className="w-12 h-12 rounded-full bg-[#B5533C]/10 flex items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-[#B5533C]" />
+            <div className="w-12 h-12 rounded-full bg-[var(--error)]/10 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-[var(--error)]" />
             </div>
           </div>
           <CardTitle className="text-xl">Invalid link</CardTitle>
@@ -63,8 +63,8 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-sm animate-scale-in">
         <CardHeader className="text-center pb-4">
           <div className="flex items-center justify-center mb-3">
-            <div className="w-12 h-12 rounded-full bg-[#3D5A45]/10 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-[#3D5A45]" />
+            <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-[var(--primary)]" />
             </div>
           </div>
           <CardTitle className="text-xl">Password reset!</CardTitle>
@@ -86,7 +86,7 @@ function ResetPasswordForm() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="flex items-start gap-2 p-2.5 text-sm bg-[#B5533C]/10 border border-[#B5533C]/20 text-[#B5533C] rounded-md">
+            <div className="flex items-start gap-2 p-2.5 text-sm bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] rounded-md">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
@@ -95,7 +95,7 @@ function ResetPasswordForm() {
             <Label htmlFor="password">New Password</Label>
             <div className="relative">
               <Input id="password" type={showPassword ? "text" : "password"} placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" className="pr-9" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9C9A94] hover:text-[#2B2925] transition-colors">
+              <button type="button" onClick={() => setShowPassword(!showPassword)}                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -117,18 +117,18 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-4">
-      <Link href="/" className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#9C9A94] hover:text-[#3D5A45] hover:bg-[#EDE9DF] transition-all duration-150">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
+      <Link href="/" className="fixed top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--soft)] transition-all duration-150">
         <ArrowLeft className="w-4 h-4" />
         <span>Home</span>
       </Link>
 
       <div className="w-full max-w-sm animate-fade-in">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-7 h-7 rounded-md bg-[#3D5A45]" />
-          <span className="font-heading font-semibold text-lg tracking-tight text-[#2B2925]">Chaduvkondi</span>
+          <div className="w-7 h-7 rounded-md bg-[var(--primary)]" />
+          <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
-        <Suspense fallback={<div className="flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#3D5A45] border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" /></div>}>
           <ResetPasswordForm />
         </Suspense>
       </div>
