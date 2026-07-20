@@ -15,6 +15,8 @@ import {
   Menu,
   X,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface User {
@@ -52,6 +54,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [avatarVisible, setAvatarVisible] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem("avatarVisible");
+    return stored !== null ? stored === "true" : true;
+  });
+
+  const toggleAvatar = () => {
+    setAvatarVisible((prev) => {
+      const next = !prev;
+      localStorage.setItem("avatarVisible", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -208,14 +223,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="p-5 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</main>
       </div>
 
-      {/* Avatar Companion – dynamically loaded */}
-      <AvatarCompanionDynamic
-        avatarUrl={user.avatarUrl ?? null}
-        shirtColor={user.avatarShirtColor}
-        pantsColor={user.avatarPantsColor}
-        hairColor={user.avatarHairColor}
-        skinColor={user.avatarSkinColor}
-      />
+      {/* Avatar Companion – dynamically loaded (only if user has a photo and toggle is on) */}
+      {user.avatarUrl && avatarVisible && (
+        <AvatarCompanionDynamic
+          avatarUrl={user.avatarUrl}
+          shirtColor={user.avatarShirtColor}
+          pantsColor={user.avatarPantsColor}
+          hairColor={user.avatarHairColor}
+          skinColor={user.avatarSkinColor}
+        />
+      )}
+
+      {/* Floating toggle button for the avatar companion */}
+      {user.avatarUrl && (
+        <button
+          onClick={toggleAvatar}
+          className="fixed bottom-5 left-5 z-50 w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] shadow-md flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:shadow-lg transition-all duration-200 opacity-40 hover:opacity-100"
+          aria-label={avatarVisible ? "Hide avatar companion" : "Show avatar companion"}
+          title={avatarVisible ? "Hide avatar" : "Show avatar"}
+        >
+          {avatarVisible ? (
+            <EyeOff className="w-4 h-4" />
+          ) : (
+            <Eye className="w-4 h-4" />
+          )}
+        </button>
+      )}
     </div>
     </AvatarActivityProvider>
   );
