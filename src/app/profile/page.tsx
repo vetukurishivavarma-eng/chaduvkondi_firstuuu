@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Sparkles, Trash2, ArrowLeft, User, X } from "lucide-react";
-
-const RPM_IFRAME_URL =
-  process.env.NEXT_PUBLIC_RPM_IFRAME_URL ||
-  "https://demo.readyplayer.me/avatar?frameApi&clearCache=true";
+import { Loader2, Sparkles, Trash2, ArrowLeft, User, Upload, Link as LinkIcon } from "lucide-react";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -27,8 +23,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showEditor, setShowEditor] = useState(false);
-  const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
+  const [showUploader, setShowUploader] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
 
   // Fetch user data
@@ -42,42 +37,73 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  // RPM postMessage listener
-  const handleMessage = useCallback((event: MessageEvent) => {
-    try {
-      const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      if (data?.source !== "readyplayerme") return;
-      if (data.eventName === "v1.avatar.exported" && data.data?.url) {
-        setNewAvatarUrl(data.data.url);
-      }
-      if (data.eventName === "v1.error") {
-        setError(data.data?.message || "Avatar editor error");
-      }
-    } catch {}
-  }, []);
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  useEffect(() => {
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [handleMessage]);
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      setError("Please select a valid image file (JPEG, PNG, WebP, or GIF)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be less than 5MB");
+      return;
+    }
 
-  async function saveAvatar(url: string) {
     setSaving(true);
     setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await fetch("/api/user/avatar/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Failed to upload avatar");
+        return;
+      }
+
+      setUser((prev) =>
+        prev ? { ...prev, avatarUrl: data.data.avatarUrl, avatarCreatedAt: new Date().toISOString() } : prev
+      );
+      setShowUploader(false);
+    } catch {
+      setError("Network error");
+    } finally {
+      setSaving(false);
+      // Reset file input so the same file can be re-selected
+      e.target.value = "";
+    }
+  }
+
+  async function handleUrlSave() {
+    if (!customUrl.trim()) return;
+    setSaving(true);
+    setError("");
+
     try {
       const res = await fetch("/api/user/avatar", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: url }),
+        body: JSON.stringify({ avatarUrl: customUrl.trim() }),
       });
+
       const data = await res.json();
       if (!data.success) {
         setError(data.error || "Failed to save avatar");
         return;
       }
-      setUser((prev) => prev ? { ...prev, avatarUrl: url, avatarCreatedAt: new Date().toISOString() } : prev);
-      setShowEditor(false);
-      setNewAvatarUrl(null);
+
+      setUser((prev) =>
+        prev ? { ...prev, avatarUrl: customUrl.trim(), avatarCreatedAt: new Date().toISOString() } : prev
+      );
+      setShowUploader(false);
+      setCustomUrl("");
     } catch {
       setError("Network error");
     } finally {
@@ -95,11 +121,6 @@ export default function ProfilePage() {
     } finally {
       setSaving(false);
     }
-  }
-
-  async function handleCustomUrl() {
-    if (!customUrl.trim()) return;
-    await saveAvatar(customUrl.trim());
   }
 
   if (loading) {
@@ -149,9 +170,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              {user.avatarUrl ? (
-                <AvatarImage src={user.avatarUrl} alt={user.name} />
-              ) : null}
+              {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>
@@ -167,51 +186,48 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
             <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-            Avatar Companion
+            Avatar
           </CardTitle>
           <CardDescription>
-            Your 3D avatar appears as a companion on the dashboard. It reacts to your activity — typing, browsing, or idle.
+            Your avatar appears on the dashboard and reacts to your activity — typing, browsing, or idle.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {user.avatarUrl ? (
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-lg bg-[var(--soft)] flex items-center justify-center overflow-hidden border border-[var(--border)]">
-                <Avatar className="w-14 h-14">
-                  <AvatarImage src={user.avatarUrl} alt="Avatar" />
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--foreground)]">Avatar Active</p>
-                <p className="text-xs text-[var(--muted)]">
-                  {user.avatarCreatedAt
-                    ? `Created ${new Date(user.avatarCreatedAt).toLocaleDateString()}`
-                    : "Custom avatar"}
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 ring-2 ring-[var(--border)]">
+              {user.avatarUrl ? (
+                <AvatarImage src={user.avatarUrl} alt="Avatar" />
+              ) : null}
+              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              {user.avatarUrl ? (
+                <>
+                  <p className="text-sm font-medium text-[var(--foreground)]">Photo Set</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    {user.avatarCreatedAt
+                      ? `Uploaded ${new Date(user.avatarCreatedAt).toLocaleDateString()}`
+                      : "Custom avatar"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-[var(--foreground)]">No Photo</p>
+                  <p className="text-xs text-[var(--muted)]">Upload a photo to personalize your dashboard</p>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-lg bg-[var(--soft)] border border-dashed border-[var(--border)] flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-[var(--muted)]" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[var(--foreground)]">No Avatar</p>
-                <p className="text-xs text-[var(--muted)]">Create a personalized avatar to appear on your dashboard</p>
-              </div>
-            </div>
-          )}
+          </div>
 
           <div className="flex flex-wrap gap-2">
             <Button
               variant={user.avatarUrl ? "outline" : "default"}
               size="sm"
-              onClick={() => setShowEditor(!showEditor)}
+              onClick={() => setShowUploader(!showUploader)}
               className="gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              {user.avatarUrl ? "Edit Avatar" : "Create Avatar"}
+              <Upload className="w-3.5 h-3.5" />
+              {user.avatarUrl ? "Change Photo" : "Upload Photo"}
             </Button>
 
             {user.avatarUrl && (
@@ -228,71 +244,65 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Avatar Creator Iframe */}
-          {showEditor && (
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-[var(--foreground)]">Avatar Editor</p>
-                <button
-                  onClick={() => { setShowEditor(false); setNewAvatarUrl(null); }}
-                  className="p-1 rounded-md hover:bg-[var(--soft)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-                  aria-label="Close editor"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* RPM-style iframe editor */}
-              <div className="relative aspect-[3/4] w-full max-w-sm mx-auto rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--soft)]">
-                <iframe
-                  ref={iframeRef}
-                  src={
-                    user.avatarUrl
-                      ? `${RPM_IFRAME_URL}&avatar=${encodeURIComponent(user.avatarUrl)}`
-                      : RPM_IFRAME_URL
-                  }
-                  title="Avatar Editor"
-                  className="w-full h-full border-0"
-                  allow="camera *; microphone *"
-                  allowFullScreen
-                />
-              </div>
-
-              {/* Or paste a custom GLB URL */}
+          {/* Upload / URL section */}
+          {showUploader && (
+            <div className="space-y-4 pt-2 p-4 bg-[var(--soft)]/30 rounded-lg border border-[var(--border)]">
+              {/* File Upload */}
               <div className="space-y-2">
-                <Label htmlFor="custom-avatar-url">Or use a custom GLB avatar URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="custom-avatar-url"
-                    placeholder="https://example.com/avatar.glb"
-                    value={customUrl}
-                    onChange={(e) => setCustomUrl(e.target.value)}
+                <Label>Upload a photo</Label>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-3 p-4 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 cursor-pointer transition-all duration-200"
+                >
+                  <Upload className="w-5 h-5 text-[var(--muted)]" />
+                  <div>
+                    <p className="text-sm font-medium text-[var(--foreground)]">Click to select a file</p>
+                    <p className="text-xs text-[var(--muted)]">JPEG, PNG, WebP, GIF • Max 5MB</p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={saving}
                   />
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-[var(--border)]" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-[var(--soft)]/30 px-2 text-[var(--muted)]">Or use a URL</span>
+                </div>
+              </div>
+
+              {/* URL Input */}
+              <div className="space-y-2">
+                <Label htmlFor="avatar-url">Image URL</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
+                    <Input
+                      id="avatar-url"
+                      placeholder="https://example.com/photo.jpg"
+                      value={customUrl}
+                      onChange={(e) => setCustomUrl(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleCustomUrl}
+                    onClick={handleUrlSave}
                     disabled={!customUrl.trim() || saving}
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
                   </Button>
                 </div>
               </div>
-
-              {/* Save from RPM iframe */}
-              {newAvatarUrl && (
-                <Button
-                  className="w-full gap-2"
-                  onClick={() => saveAvatar(newAvatarUrl!)}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                  ) : (
-                    "Save Edited Avatar"
-                  )}
-                </Button>
-              )}
             </div>
           )}
         </CardContent>

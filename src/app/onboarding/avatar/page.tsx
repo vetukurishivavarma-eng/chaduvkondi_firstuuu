@@ -1,81 +1,76 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, SkipForward } from "lucide-react";
-
-/**
- * Ready Player Me avatar creator iframe URL.
- * Replace SUBDOMAIN with your RPM partner subdomain.
- * RPM was sunset Jan 2026 – you can use any GLB avatar service
- * that emits { url } via postMessage on the "v1.avatar.exported" channel.
- */
-const RPM_IFRAME_URL =
-  process.env.NEXT_PUBLIC_RPM_IFRAME_URL ||
-  "https://demo.readyplayer.me/avatar?frameApi&clearCache=true";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Sparkles, SkipForward, Upload } from "lucide-react";
 
 export default function OnboardingAvatarPage() {
   const router = useRouter();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [showIframe, setShowIframe] = useState(true);
 
-  // Listen for RPM postMessage
-  const handleMessage = useCallback(
-    (event: MessageEvent) => {
-      // Validate origin if needed: event.origin === "https://subdomain.readyplayer.me"
-      try {
-        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        if (data?.source !== "readyplayerme") return;
+    // Validate type
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      setError("Please select a valid image file (JPEG, PNG, WebP, or GIF)");
+      return;
+    }
 
-        if (data.eventName === "v1.avatar.exported" && data.data?.url) {
-          const url = data.data.url;
-          setAvatarUrl(url);
-          setShowIframe(false);
-          setError("");
-        }
+    // Validate size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be less than 5MB");
+      return;
+    }
 
-        if (data.eventName === "v1.error") {
-          setError(
-            data.data?.message || "Avatar creation encountered an issue. Please try again."
-          );
-        }
-      } catch {
-        // Not a JSON message from RPM – ignore
-      }
-    },
-    []
-  );
+    setError("");
+    setSelectedFile(file);
+    // Revoke previous preview URL if exists
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
+    // Reset input value so the same file can be re-selected
+    e.target.value = "";
+  }
 
+  // Revoke blob URL when component unmounts
   useEffect(() => {
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [handleMessage]);
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-  // Save avatar to backend
-  async function handleSave() {
-    if (!avatarUrl) return;
+  async function handleUpload() {
+    if (!selectedFile) return;
+
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("/api/user/avatar", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl }),
+      const formData = new FormData();
+      formData.append("avatar", selectedFile);
+
+      const res = await fetch("/api/user/avatar/upload", {
+        method: "POST",
+        body: formData,
       });
 
       const data = await res.json();
+
       if (!data.success) {
-        setError(data.error || "Failed to save avatar");
+        setError(data.error || "Failed to upload avatar");
         return;
       }
 
+      // Revoke preview before navigating
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -85,17 +80,9 @@ export default function OnboardingAvatarPage() {
     }
   }
 
-  // Skip for now
   function handleSkip() {
     router.push("/dashboard");
     router.refresh();
-  }
-
-  // Retry iframe
-  function handleRetry() {
-    setError("");
-    setShowIframe(true);
-    setAvatarUrl(null);
   }
 
   return (
@@ -115,9 +102,9 @@ export default function OnboardingAvatarPage() {
                 <Sparkles className="w-6 h-6 text-[var(--primary)]" />
               </div>
             </div>
-            <CardTitle className="text-xl">Create Your Avatar</CardTitle>
+            <CardTitle className="text-xl">Set Your Profile Picture</CardTitle>
             <CardDescription>
-              Personalize your learning companion. A 3D avatar that reacts to your activity on the platform.
+              Upload a photo to personalize your experience. Your avatar will appear on the dashboard and react to your activity.
             </CardDescription>
           </CardHeader>
 
@@ -128,76 +115,72 @@ export default function OnboardingAvatarPage() {
               </div>
             )}
 
-            {/* Avatar Creator Iframe */}
-            {showIframe && !avatarUrl && (
-              <div className="relative aspect-[3/4] w-full rounded-lg border border-[var(--border)] overflow-hidden bg-[var(--soft)]">
-                <iframe
-                  ref={iframeRef}
-                  src={RPM_IFRAME_URL}
-                  title="Avatar Creator"
-                  className="w-full h-full border-0"
-                  allow="camera *; microphone *"
-                  allowFullScreen
-                />
-              </div>
-            )}
-
-            {/* Avatar Preview */}
-            {avatarUrl && (
-              <div className="text-center space-y-3">
-                <div className="flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-10 h-10 text-white" />
-                  </div>
+            {/* Upload Area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center gap-3 p-8 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 cursor-pointer transition-all duration-200"
+            >
+              {previewUrl ? (
+                <Avatar className="w-28 h-28 ring-4 ring-[var(--primary)]/20">
+                  <AvatarImage src={previewUrl} alt="Preview" />
+                  <AvatarFallback className="text-2xl">
+                    <Upload className="w-8 h-8 text-[var(--muted)]" />
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className="w-28 h-28 rounded-full bg-[var(--soft)] border-2 border-dashed border-[var(--border)] flex items-center justify-center">
+                  <Upload className="w-10 h-10 text-[var(--muted)]" />
                 </div>
-                <p className="text-sm text-[var(--muted)]">
-                  Avatar created successfully! You can always change it later from your profile.
+              )}
+              <div className="text-center">
+                <p className="text-sm font-medium text-[var(--foreground)]">
+                  {previewUrl ? "Click to change photo" : "Click to upload a photo"}
+                </p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">
+                  JPEG, PNG, WebP, or GIF • Max 5MB
                 </p>
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+
+            {selectedFile && (
+              <p className="text-sm text-center text-[var(--muted)]">
+                Selected: {selectedFile.name}
+              </p>
             )}
           </CardContent>
 
           <CardFooter className="flex flex-col gap-3 pt-2">
-            {!avatarUrl ? (
-              <>
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={handleSkip}
-                >
-                  <SkipForward className="w-4 h-4" />
-                  Skip for now
-                </Button>
-                {error && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    onClick={handleRetry}
-                  >
-                    Try Again
-                  </Button>
-                )}
-              </>
-            ) : (
+            {selectedFile ? (
               <Button
                 className="w-full gap-2"
-                onClick={handleSave}
+                onClick={handleUpload}
                 disabled={loading}
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
                 ) : (
-                  "Use This Avatar"
+                  "Use This Photo"
                 )}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleSkip}
+              >
+                <SkipForward className="w-4 h-4" />
+                Skip for now
               </Button>
             )}
           </CardFooter>
         </Card>
-
-        <p className="text-center text-xs text-[var(--muted)] mt-4">
-          Powered by Ready Player Me (sunset Jan 2026). Replace with any GLB avatar provider.
-        </p>
       </div>
     </div>
   );
