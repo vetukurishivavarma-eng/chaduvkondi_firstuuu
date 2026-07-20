@@ -81,6 +81,8 @@ export default function OnboardingAvatarPage() {
   }
 
   function handleSkip() {
+    // Remember skip for this session so we don't redirect again
+    sessionStorage.setItem("avatarSkipped", "true");
     router.push("/dashboard");
     router.refresh();
   }

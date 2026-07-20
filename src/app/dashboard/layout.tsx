@@ -53,12 +53,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) setUser(data.data);
-        else router.push("/login");
+        if (!data.success) {
+          router.push("/login");
+          return;
+        }
+        setUser(data.data);
+
+        // Redirect to avatar onboarding if user has no avatar and hasn't skipped
+        if (
+          !data.data.avatarUrl &&
+          pathname === "/dashboard" &&
+          !sessionStorage.getItem("avatarSkipped")
+        ) {
+          router.push("/onboarding/avatar");
+        }
       })
       .catch(() => router.push("/login"))
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, pathname]);
 
   async function handleLogout() {
     try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
