@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
@@ -64,10 +64,63 @@ class AnimationBlender {
   }
 }
 
+// ─── Color animation helpers ───────────────────────────────────────────────
+
+const COLOR_LERP_SPEED = 4.0; // exponential smoothing factor (~0.5s to settle)
+
+type ColorKey = "shirt" | "pants" | "hair" | "shoes" | "skin";
+
+/**
+ * Manages smooth color transitions for a group of materials.
+ * Stores a current animated THREE.Color and a target, lerping each frame.
+ */
+class ColorAnimator {
+  readonly current: THREE.Color;
+  readonly target: THREE.Color;
+  readonly materials: THREE.MeshStandardMaterial[] = [];
+
+  constructor(hex: string) {
+    this.current = new THREE.Color(hex);
+    this.target = new THREE.Color(hex);
+  }
+
+  /** Track a material whose color should be animated */
+  track(mat: THREE.MeshStandardMaterial | null) {
+    if (mat) this.materials.push(mat);
+  }
+
+  /** Set a new target color (called on prop change) */
+  setTarget(hex: string) {
+    this.target.set(hex);
+  }
+
+  /** Lerp current toward target and apply to all tracked materials */
+  tick(delta: number) {
+    const factor = 1 - Math.exp(-COLOR_LERP_SPEED * delta);
+    this.current.lerp(this.target, factor);
+    const c = this.current;
+    for (let i = 0; i < this.materials.length; i++) {
+      this.materials[i].color.copy(c);
+    }
+  }
+
+  /** Snap current to target immediately (avoids white flash on mount) */
+  snapToTarget() {
+    this.current.copy(this.target);
+    const c = this.current;
+    for (let i = 0; i < this.materials.length; i++) {
+      this.materials[i].color.copy(c);
+    }
+  }
+}
+
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const R = 0.06; // Default rounded-box radius
+const R = 0.06;
 const R_SMALL = 0.04;
+const HEAD_W = 0.42;
+const HEAD_H = 0.44;
+const HEAD_D = 0.38;
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
@@ -83,14 +136,75 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
 
   const blenderRef = useRef(new AnimationBlender());
 
-  // Resolve colors
-  const colors = useMemo(() => ({
-    skin: DEFAULT_COLORS.skin,
-    shirt: shirtColor || DEFAULT_COLORS.shirt,
-    pants: pantsColor || DEFAULT_COLORS.pants,
-    shoes: DEFAULT_COLORS.shoes,
-    hair: hairColor || DEFAULT_COLORS.hair,
-  }), [shirtColor, pantsColor, hairColor]);
+  // ── Smooth color animation (refs – no re-renders) ──────────────────
+  const animRef = useRef({
+    shirt: new ColorAnimator(shirtColor || DEFAULT_COLORS.shirt),
+    pants: new ColorAnimator(pantsColor || DEFAULT_COLORS.pants),
+    hair: new ColorAnimator(hairColor || DEFAULT_COLORS.hair),
+    shoes: new ColorAnimator(DEFAULT_COLORS.shoes),
+    skin: new ColorAnimator(DEFAULT_COLORS.skin),
+  });
+
+  // Sync targets when props change
+  useEffect(() => {
+    animRef.current.shirt.setTarget(shirtColor || DEFAULT_COLORS.shirt);
+    animRef.current.pants.setTarget(pantsColor || DEFAULT_COLORS.pants);
+    animRef.current.hair.setTarget(hairColor || DEFAULT_COLORS.hair);
+  }, [shirtColor, pantsColor, hairColor]);
+
+  // ── Material refs for the color-animated meshes ───────────────────
+  const matTorso = useRef<THREE.MeshStandardMaterial>(null!);
+  const matHairMain = useRef<THREE.MeshStandardMaterial>(null!);
+  const matHairLeft = useRef<THREE.MeshStandardMaterial>(null!);
+  const matHairRight = useRef<THREE.MeshStandardMaterial>(null!);
+  const matBrowLeft = useRef<THREE.MeshStandardMaterial>(null!);
+  const matBrowRight = useRef<THREE.MeshStandardMaterial>(null!);
+  const matPantsLU = useRef<THREE.MeshStandardMaterial>(null!);
+  const matPantsLL = useRef<THREE.MeshStandardMaterial>(null!);
+  const matPantsRU = useRef<THREE.MeshStandardMaterial>(null!);
+  const matPantsRL = useRef<THREE.MeshStandardMaterial>(null!);
+  const matShoeL = useRef<THREE.MeshStandardMaterial>(null!);
+  const matShoeR = useRef<THREE.MeshStandardMaterial>(null!);
+  const matShoulderL = useRef<THREE.MeshStandardMaterial>(null!);
+  const matShoulderR = useRef<THREE.MeshStandardMaterial>(null!);
+  const matHead = useRef<THREE.MeshStandardMaterial>(null!);
+  const matNeck = useRef<THREE.MeshStandardMaterial>(null!);
+  const matArmLU = useRef<THREE.MeshStandardMaterial>(null!);
+  const matArmLF = useRef<THREE.MeshStandardMaterial>(null!);
+  const matArmRU = useRef<THREE.MeshStandardMaterial>(null!);
+  const matArmRF = useRef<THREE.MeshStandardMaterial>(null!);
+
+  // Track materials with their color animators (runs once on mount)
+  useEffect(() => {
+    const a = animRef.current;
+    a.shirt.track(matTorso.current);
+    a.shirt.track(matShoulderL.current);
+    a.shirt.track(matShoulderR.current);
+    a.pants.track(matPantsLU.current);
+    a.pants.track(matPantsLL.current);
+    a.pants.track(matPantsRU.current);
+    a.pants.track(matPantsRL.current);
+    a.hair.track(matHairMain.current);
+    a.hair.track(matHairLeft.current);
+    a.hair.track(matHairRight.current);
+    a.hair.track(matBrowLeft.current);
+    a.hair.track(matBrowRight.current);
+    a.shoes.track(matShoeL.current);
+    a.shoes.track(matShoeR.current);
+    a.skin.track(matHead.current);
+    a.skin.track(matNeck.current);
+    a.skin.track(matArmLU.current);
+    a.skin.track(matArmLF.current);
+    a.skin.track(matArmRU.current);
+    a.skin.track(matArmRF.current);
+
+    // Snap to target colors immediately (prevents white flash on mount)
+    a.shirt.snapToTarget();
+    a.pants.snapToTarget();
+    a.hair.snapToTarget();
+    a.shoes.snapToTarget();
+    a.skin.snapToTarget();
+  }, []);
 
   // Load photo texture
   const texture = useMemo(() => {
@@ -102,7 +216,7 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     return tex;
   }, [photoDataUrl]);
 
-  // Main animation loop
+  // Main animation loop – drives motion + color transitions
   useFrame((_, delta) => {
     if (!groupRef.current) return;
 
@@ -118,7 +232,6 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     if (headGroupRef.current) {
       headGroupRef.current.rotation.x = frame.headTilt;
     }
-
     if (leftArmRef.current) {
       leftArmRef.current.rotation.x = frame.leftArm;
       leftArmRef.current.rotation.z = frame.leftArmZ;
@@ -139,39 +252,43 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
     if (rightForearmRef.current) {
       rightForearmRef.current.rotation.x = frame.rightElbow;
     }
-  });
 
-  const HEAD_W = 0.42;
-  const HEAD_H = 0.44;
-  const HEAD_D = 0.38;
+    // ── Animate colors ─────────────────────────────────────────
+    const a = animRef.current;
+    a.shirt.tick(delta);
+    a.pants.tick(delta);
+    a.hair.tick(delta);
+    a.shoes.tick(delta);
+    a.skin.tick(delta);
+  });
 
   return (
     <group ref={groupRef} scale={1.3} position={[0, -0.35, 0]}>
       {/* ── Body (torso) ─────────────────────────────────────────────── */}
       <RoundedBox args={[0.52, 0.58, 0.28]} radius={R} smoothness={3}>
-        <meshStandardMaterial color={colors.shirt} roughness={0.7} />
+        <meshStandardMaterial ref={matTorso} roughness={0.7} />
       </RoundedBox>
 
-      {/* Collar detail – a thin strip at the top of the torso */}
+      {/* Collar detail */}
       <mesh position={[0, 0.33, 0.15]}>
         <planeGeometry args={[0.2, 0.04]} />
-        <meshStandardMaterial color={colors.skin} roughness={0.8} />
+        <meshStandardMaterial color={DEFAULT_COLORS.skin} roughness={0.8} />
       </mesh>
 
       {/* ── Neck ─────────────────────────────────────────────────────── */}
       <mesh position={[0, 0.82, 0]}>
         <cylinderGeometry args={[0.08, 0.1, 0.08, 8]} />
-        <meshStandardMaterial color={colors.skin} roughness={0.8} />
+        <meshStandardMaterial ref={matNeck} roughness={0.8} />
       </mesh>
 
       {/* ── Head ─────────────────────────────────────────────────────── */}
       <group ref={headGroupRef} position={[0, 1.08, 0]}>
-        {/* Main head – rounded box with skin color */}
+        {/* Main head */}
         <RoundedBox args={[HEAD_W, HEAD_H, HEAD_D]} radius={R} smoothness={3}>
-          <meshStandardMaterial color={colors.skin} roughness={0.6} />
+          <meshStandardMaterial ref={matHead} roughness={0.6} />
         </RoundedBox>
 
-        {/* Face plane – the photo texture maps cleanly onto this */}
+        {/* Face plane – photo texture */}
         {texture && (
           <mesh position={[0, 0.02, HEAD_D / 2 + 0.001]}>
             <planeGeometry args={[HEAD_W * 0.75, HEAD_H * 0.7]} />
@@ -184,24 +301,22 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
           </mesh>
         )}
 
-        {/* ── Hair ─────────────────────────────────────────────────────── */}
-        {/* Main hair volume – sits on top and slightly over the sides */}
+        {/* ── Hair ───────────────────────────────────────────────────── */}
         <RoundedBox
           args={[HEAD_W + 0.04, HEAD_H * 0.25, HEAD_D]}
           radius={R_SMALL}
           smoothness={3}
           position={[0, HEAD_H * 0.36, 0]}
         >
-          <meshStandardMaterial color={colors.hair} roughness={0.9} />
+          <meshStandardMaterial ref={matHairMain} roughness={0.9} />
         </RoundedBox>
-        {/* Side hair bits */}
         <RoundedBox
           args={[0.06, HEAD_H * 0.35, HEAD_D]}
           radius={R_SMALL}
           smoothness={3}
           position={[-HEAD_W / 2 - 0.02, 0.0, 0]}
         >
-          <meshStandardMaterial color={colors.hair} roughness={0.9} />
+          <meshStandardMaterial ref={matHairLeft} roughness={0.9} />
         </RoundedBox>
         <RoundedBox
           args={[0.06, HEAD_H * 0.35, HEAD_D]}
@@ -209,39 +324,35 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
           smoothness={3}
           position={[HEAD_W / 2 + 0.02, 0.0, 0]}
         >
-          <meshStandardMaterial color={colors.hair} roughness={0.9} />
+          <meshStandardMaterial ref={matHairRight} roughness={0.9} />
         </RoundedBox>
 
-        {/* ── Eyes ─────────────────────────────────────────────────────── */}
-        {/* Left eye sclera */}
+        {/* ── Eyes ────────────────────────────────────────────────────── */}
         <mesh position={[-0.13, 0.06, HEAD_D / 2 + 0.005]}>
           <sphereGeometry args={[0.045, 12, 12]} />
           <meshStandardMaterial color={DEFAULT_COLORS.eyeWhite} roughness={0.3} />
         </mesh>
-        {/* Left pupil */}
         <mesh position={[-0.13, 0.06, HEAD_D / 2 + 0.025]}>
           <sphereGeometry args={[0.025, 10, 10]} />
           <meshStandardMaterial color={DEFAULT_COLORS.eyePupil} roughness={0.1} />
         </mesh>
-        {/* Right eye sclera */}
         <mesh position={[0.13, 0.06, HEAD_D / 2 + 0.005]}>
           <sphereGeometry args={[0.045, 12, 12]} />
           <meshStandardMaterial color={DEFAULT_COLORS.eyeWhite} roughness={0.3} />
         </mesh>
-        {/* Right pupil */}
         <mesh position={[0.13, 0.06, HEAD_D / 2 + 0.025]}>
           <sphereGeometry args={[0.025, 10, 10]} />
           <meshStandardMaterial color={DEFAULT_COLORS.eyePupil} roughness={0.1} />
         </mesh>
 
-        {/* ── Eyebrows ──────────────────────────────────────────────────── */}
+        {/* ── Eyebrows ───────────────────────────────────────────────── */}
         <RoundedBox
           args={[0.08, 0.012, 0.02]}
           radius={0.006}
           smoothness={2}
           position={[-0.13, 0.14, HEAD_D / 2 + 0.01]}
         >
-          <meshStandardMaterial color={colors.hair} roughness={0.9} />
+          <meshStandardMaterial ref={matBrowLeft} roughness={0.9} />
         </RoundedBox>
         <RoundedBox
           args={[0.08, 0.012, 0.02]}
@@ -249,10 +360,10 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
           smoothness={2}
           position={[0.13, 0.14, HEAD_D / 2 + 0.01]}
         >
-          <meshStandardMaterial color={colors.hair} roughness={0.9} />
+          <meshStandardMaterial ref={matBrowRight} roughness={0.9} />
         </RoundedBox>
 
-        {/* ── Mouth (subtle smile) ──────────────────────────────────────── */}
+        {/* Mouth */}
         <mesh position={[0, -0.08, HEAD_D / 2 + 0.008]}>
           <planeGeometry args={[0.06, 0.012]} />
           <meshStandardMaterial color={DEFAULT_COLORS.mouth} roughness={0.9} />
@@ -261,20 +372,17 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
 
       {/* ── Left Arm ─────────────────────────────────────────────────── */}
       <group ref={leftArmRef} position={[-0.35, 0.62, 0]}>
-        {/* Upper arm – cylinder */}
         <mesh position={[0, -0.2, 0]}>
           <cylinderGeometry args={[0.07, 0.075, 0.35, 8]} />
-          <meshStandardMaterial color={colors.skin} roughness={0.7} />
+          <meshStandardMaterial ref={matArmLU} roughness={0.7} />
         </mesh>
-        {/* Forearm – cylinder with elbow hinge */}
         <mesh ref={leftForearmRef} position={[0, -0.4, 0]}>
           <cylinderGeometry args={[0.065, 0.055, 0.3, 8]} />
-          <meshStandardMaterial color={colors.skin} roughness={0.7} />
+          <meshStandardMaterial ref={matArmLF} roughness={0.7} />
         </mesh>
-        {/* Shoulder joint */}
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[0.07, 8, 8]} />
-          <meshStandardMaterial color={colors.shirt} roughness={0.7} />
+          <meshStandardMaterial ref={matShoulderL} roughness={0.7} />
         </mesh>
       </group>
 
@@ -282,34 +390,31 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
       <group ref={rightArmRef} position={[0.35, 0.62, 0]}>
         <mesh position={[0, -0.2, 0]}>
           <cylinderGeometry args={[0.07, 0.075, 0.35, 8]} />
-          <meshStandardMaterial color={colors.skin} roughness={0.7} />
+          <meshStandardMaterial ref={matArmRU} roughness={0.7} />
         </mesh>
         <mesh ref={rightForearmRef} position={[0, -0.4, 0]}>
           <cylinderGeometry args={[0.065, 0.055, 0.3, 8]} />
-          <meshStandardMaterial color={colors.skin} roughness={0.7} />
+          <meshStandardMaterial ref={matArmRF} roughness={0.7} />
         </mesh>
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[0.07, 8, 8]} />
-          <meshStandardMaterial color={colors.shirt} roughness={0.7} />
+          <meshStandardMaterial ref={matShoulderR} roughness={0.7} />
         </mesh>
       </group>
 
       {/* ── Left Leg ─────────────────────────────────────────────────── */}
       <group ref={leftLegRef} position={[-0.12, 0.15, 0]}>
-        {/* Upper leg */}
         <mesh position={[0, -0.18, 0]}>
           <cylinderGeometry args={[0.09, 0.08, 0.32, 8]} />
-          <meshStandardMaterial color={colors.pants} roughness={0.8} />
+          <meshStandardMaterial ref={matPantsLU} roughness={0.8} />
         </mesh>
-        {/* Lower leg */}
         <mesh position={[0, -0.4, 0.01]}>
           <cylinderGeometry args={[0.075, 0.065, 0.28, 8]} />
-          <meshStandardMaterial color={colors.pants} roughness={0.8} />
+          <meshStandardMaterial ref={matPantsLL} roughness={0.8} />
         </mesh>
-        {/* Shoe */}
         <mesh position={[0, -0.52, 0.04]}>
           <RoundedBox args={[0.18, 0.08, 0.28]} radius={0.03} smoothness={2}>
-            <meshStandardMaterial color={colors.shoes} roughness={0.9} />
+            <meshStandardMaterial ref={matShoeL} roughness={0.9} />
           </RoundedBox>
         </mesh>
       </group>
@@ -318,15 +423,15 @@ export function GeometricAvatar({ photoDataUrl, state, shirtColor, pantsColor, h
       <group ref={rightLegRef} position={[0.12, 0.15, 0]}>
         <mesh position={[0, -0.18, 0]}>
           <cylinderGeometry args={[0.09, 0.08, 0.32, 8]} />
-          <meshStandardMaterial color={colors.pants} roughness={0.8} />
+          <meshStandardMaterial ref={matPantsRU} roughness={0.8} />
         </mesh>
         <mesh position={[0, -0.4, 0.01]}>
           <cylinderGeometry args={[0.075, 0.065, 0.28, 8]} />
-          <meshStandardMaterial color={colors.pants} roughness={0.8} />
+          <meshStandardMaterial ref={matPantsRL} roughness={0.8} />
         </mesh>
         <mesh position={[0, -0.52, 0.04]}>
           <RoundedBox args={[0.18, 0.08, 0.28]} radius={0.03} smoothness={2}>
-            <meshStandardMaterial color={colors.shoes} roughness={0.9} />
+            <meshStandardMaterial ref={matShoeR} roughness={0.9} />
           </RoundedBox>
         </mesh>
       </group>
