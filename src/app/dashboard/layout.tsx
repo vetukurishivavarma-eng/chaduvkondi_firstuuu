@@ -20,6 +20,11 @@ import {
   Cloud,
   Flame,
   Coffee,
+  RotateCcw,
+  Map,
+  Code2,
+  Swords,
+  Wand2,
 } from "lucide-react";
 
 interface User {
@@ -46,6 +51,11 @@ const MOOD_CONFIG: Record<string, { icon: string; label: string; color: string }
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/quiz", label: "Quiz", icon: Brain },
+  { href: "/spaced-repetition", label: "Review", icon: RotateCcw },
+  { href: "/roadmaps", label: "Roadmaps", icon: Map },
+  { href: "/playground", label: "Playground", icon: Code2 },
+  { href: "/ai-tutor", label: "AI Tutor", icon: Wand2 },
+  { href: "/battles", label: "Battles", icon: Swords },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/profile", label: "Profile", icon: Sparkles },
 ];

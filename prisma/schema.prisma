@@ -79,6 +79,8 @@ model User {
   challengeSubmissions ChallengeSubmission[]
   dailyChallenges       UserDailyChallenge[]
   seasonScores          UserSeasonScore[]
+  battlesInitiated     Battle[]   @relation("challenger")
+  battlesReceived      Battle[]   @relation("opponent")
 }
 
 model Track {
@@ -96,6 +98,7 @@ model Track {
   subDomains  SubDomain[]
   users       User[]
   quizAttempts QuizAttempt[]
+  battles     Battle[]
 }
 
 model SubDomain {
@@ -364,6 +367,26 @@ model LeaderboardSeason {
   createdAt   DateTime @default(now())
 
   userScores  UserSeasonScore[]
+}
+
+model Battle {
+  id              String   @id @default(cuid())
+  challengerId    String
+  opponentId      String
+  trackId         String
+  status          String   @default("pending") // pending, accepted, completed, declined
+  challengerScore Float?
+  opponentScore   Float?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  challenger   User  @relation("challenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  opponent     User  @relation("opponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  track        Track @relation(fields: [trackId], references: [id])
+
+  @@index([challengerId])
+  @@index([opponentId])
 }
 
 model UserSeasonScore {

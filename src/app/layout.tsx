@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -16,6 +17,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
   title: "Chaduvkondi — Multi-Language Mastery Platform",
   description:
     "Master Python, JavaScript, TypeScript, Java, Go, Rust, and Salesforce with adaptive quizzes. Instant remediation, spaced repetition, and mastery-based learning.",
@@ -50,7 +52,10 @@ export default function RootLayout({
       className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ServiceWorkerRegister />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

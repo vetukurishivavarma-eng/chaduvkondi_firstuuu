@@ -1,24 +1,37 @@
-Add FastAPI track + gamification + glass morphism UI
+🚀 Add 6 major features: Spaced Repetition, Roadmaps, Playground, PWA, Battles & AI Tutor
 
-🚀 New Tracks: 10th track - FastAPI (beginner to expert)
-  - Fundamentals: routes, Pydantic, DI, error handling
-  - Database & Async: SQLAlchemy, Alembic, WebSockets
-  - Auth, Testing & Deployment: JWT, pytest, Docker
+✨ Feature 1: Spaced Repetition Dashboard
+  - /spaced-repetition page with due concepts, retention stats, interval distribution
+  - API at /api/spaced-repetition with full SR data tracking
 
-🎮 Gamification:
-  - Daily challenges with auto-progress + reward claiming
-  - 30-day activity heatmap + streak visualization
-  - Leaderboard seasons with period selector
-  - Streak milestones (3/7/14/30/60/90/365 days)
+🗺️ Feature 2: Learning Roadmaps
+  - /roadmaps page with visual node-based progress per track
+  - Color-coded concept nodes: Mastered (green), Learning (blue), Started (amber), New (grey)
+  - Track selector, overall progress stats, sub-domain breakdown
 
-✨ UI Overhaul:
-  - Glass morphism (glass class) on ALL pages
-  - Entrance animations (fade-in, scale-in, slide-up, stagger)
-  - Card hover effects (card-lift, card-bounce)
-  - Gradient text headings
+💻 Feature 3: Interactive Code Playground
+  - /playground page with multi-language code editor (Python, JS, TS, Java, Rust, Go)
+  - API at /api/playground with Piston API integration + local fallback simulation
+  - Terminal output panel with execution timing
 
-🔄 Other:
-  - Mood/state selector on signup (6 moods)
-  - Meme-based quiz feedback per mood
-  - 3D avatar removed from dashboard
-  - UserMood enum in schema
+📱 Feature 4: PWA + Offline Mode
+  - manifest.json with shortcuts to Quiz, Review & Leaderboard
+  - Service worker (sw.js) with cache-first for static, network-first for API
+  - Offline fallback page with graceful messaging
+
+⚔️ Feature 5: Multiplayer Quiz Battles
+  - /battles page with challenge system, opponent finder, win/loss tracking
+  - Battle model in Prisma schema with challenger/opponent relations
+  - Full CRUD API at /api/battles
+
+🤖 Feature 6: AI Tutor & Smart Hint System
+  - /ai-tutor page with chat interface, mood selector, quick prompts
+  - Contextual hint generation API at /api/hints
+  - Smart explanations for wrong answers + study recommendations
+
+🛠️ Infrastructure:
+  - All new pages registered in middleware (protected routes + matcher)
+  - Full sidebar navigation in dashboard layout
+  - Battle model added to Prisma schema with proper relations
+  - Schema synced to database
+  - Build passes with zero TypeScript errors
