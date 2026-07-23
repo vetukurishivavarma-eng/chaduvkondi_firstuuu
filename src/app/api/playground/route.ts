@@ -303,10 +303,10 @@ function evaluatePythonExpr(expr: string, vars: Record<string, string>, funcs: R
 
     // Try common built-in functions
     const builtInResults: Record<string, string> = {
-      len: String(fargs.length),
-      abs: fargs.replace(/^-/, ""),
+      abs: evaluatePythonExpr(fargs.replace(/^-/, ""), vars, funcs),
+      len: computePythonLen(fargs, vars, funcs),
     };
-    if (builtInResults[fname]) return builtInResults[fname];
+    if (builtInResults[fname] !== undefined && fname in builtInResults) return builtInResults[fname];
     
     // Unknown function
     return `[Result of ${fname}()]`;
@@ -337,6 +337,58 @@ function evaluatePythonExpr(expr: string, vars: Record<string, string>, funcs: R
   if (/^[[{]/.test(clean)) return clean;
 
   return clean;
+}
+
+function computePythonLen(fargs: string, vars: Record<string, string>, funcs: Record<string, string>): string {
+  const trimmed = fargs.trim();
+
+  // List literal: len([1, 2, 3]) → count items at depth 0
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    const inner = trimmed.slice(1, -1).trim();
+    if (!inner) return "0";
+    // Split by commas at depth 0, respecting strings inside
+    const items = splitArgs(inner);
+    return String(items.length);
+  }
+
+  // Tuple literal
+  if (trimmed.startsWith("(") && trimmed.endsWith(")")) {
+    const inner = trimmed.slice(1, -1).trim();
+    if (!inner) return "0";
+    const items = splitArgs(inner);
+    return String(items.length);
+  }
+
+  // Dict literal: len({"a":1, "b":2}) → count keys
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    const inner = trimmed.slice(1, -1).trim();
+    if (!inner) return "0";
+    const items = splitArgs(inner);
+    return String(items.length);
+  }
+
+  // String literal: len("hello") → character count of the content
+  // Use [\s\S] instead of /s flag (ES2018+ only)
+  const strMatch = trimmed.match(/^['"]([\s\S]*)['"]$/);
+  if (strMatch) {
+    return String(strMatch[1].length);
+  }
+
+  // Variable reference: len(my_list) → resolve variable and calculate
+  if (vars[trimmed]) {
+    const val = vars[trimmed];
+    return computePythonLen(val, vars, funcs);
+  }
+
+  // Function call: len(range(10)) → try evaluating first
+  const callMatch = trimmed.match(/^range\s*\((\d+)\)$/);
+  if (callMatch) {
+    return callMatch[1]; // range(10) has 10 items
+  }
+
+  // Fallback: evaluate as expression to get the value, then get length
+  const evaluated = evaluatePythonExpr(fargs, vars, funcs);
+  return String(evaluated.length);
 }
 
 function processPythonFString(content: string, vars: Record<string, string>): string {

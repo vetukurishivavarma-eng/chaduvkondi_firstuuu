@@ -1,17 +1,7 @@
-Fix AI Tutor, Playground output & navigation on all new pages
+Fix len() built-in in playground simulation to return actual evaluated length
 
-🔧 AI Tutor Rewrite:
-- Created /api/ai-tutor endpoint that searches concept DB for contextual responses
-- Page now calls real API instead of client-side setTimeout simulation
-- Intelligent fallback for 10+ categories (recursion, JS, Python, React, SQL, etc.)
-
-🔧 Playground Fix:
-- Fixed 401 error: tries 3 different Piston API endpoints in sequence
-- Rewrote simulation engine: handles f-strings, template literals, multi-arg
-  print/console.log, variable tracking, ** exponentiation, function calls
-- Default code examples now produce realistic output
-- Fixed TypeScript /s regex flag error (ES2018+ compat)
-
-🔧 Navigation Fix:
-- Added "Back to Dashboard" and "Home" links to all 5 standalone pages
-- Pages: spaced-repetition, roadmaps, playground, battles, ai-tutor
+- Replaced raw string length (String(fargs.length)) with computePythonLen()
+- Handles: list/tuple/dict literals, string literals, variables, range(N)
+- Uses splitArgs() for proper comma counting with nested depth
+- Also improved abs() to properly evaluate the expression
+- Fixed /s regex flag → [\s\S] pattern for TS compatibility
