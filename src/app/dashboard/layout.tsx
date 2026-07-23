@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { AvatarActivityProvider } from "@/components/avatar-activity-provider";
 import {
   LayoutDashboard,
   Brain,
@@ -15,8 +14,12 @@ import {
   Menu,
   X,
   Sparkles,
-  Eye,
-  EyeOff,
+  Smile,
+  Zap,
+  Moon,
+  Cloud,
+  Flame,
+  Coffee,
 } from "lucide-react";
 
 interface User {
@@ -25,21 +28,20 @@ interface User {
   email: string;
   role: string;
   avatarUrl?: string | null;
-  avatarShirtColor?: string;
-  avatarPantsColor?: string;
-  avatarHairColor?: string;
-  avatarSkinColor?: string;
+  mood?: string;
   overallScore?: number;
   conceptsCount?: number;
   tier?: { name: string; color: string; icon: string } | null;
 }
 
-// Dynamic import for the Three.js avatar companion
-import dynamic from "next/dynamic";
-const AvatarCompanionDynamic = dynamic(
-  () => import("@/components/avatar-companion").then((m) => m.AvatarCompanionInner),
-  { ssr: false }
-);
+const MOOD_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
+  hype: { icon: "🔥", label: "Hype Mode", color: "#ef4444" },
+  chill: { icon: "😎", label: "Chill Vibes", color: "#22c55e" },
+  focused: { icon: "🎯", label: "Locked In", color: "#3b82f6" },
+  tired: { icon: "😴", label: "Tired Dev", color: "#a855f7" },
+  stressed: { icon: "😰", label: "Stressed Out", color: "#f59e0b" },
+  confused: { icon: "🤔", label: "Confused", color: "#ec4899" },
+};
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -54,19 +56,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [avatarVisible, setAvatarVisible] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const stored = localStorage.getItem("avatarVisible");
-    return stored !== null ? stored === "true" : true;
-  });
-
-  const toggleAvatar = () => {
-    setAvatarVisible((prev) => {
-      const next = !prev;
-      localStorage.setItem("avatarVisible", String(next));
-      return next;
-    });
-  };
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -77,15 +66,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           return;
         }
         setUser(data.data);
-
-        // Redirect to avatar onboarding if user has no avatar and hasn't skipped
-        if (
-          !data.data.avatarUrl &&
-          pathname === "/dashboard" &&
-          !sessionStorage.getItem("avatarSkipped")
-        ) {
-          router.push("/onboarding/avatar");
-        }
       })
       .catch(() => router.push("/login"))
       .finally(() => setLoading(false));
@@ -111,18 +91,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null;
 
   const initials = user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  const moodConfig = MOOD_CONFIG[user.mood || "chill"] || MOOD_CONFIG.chill;
 
   return (
-    <AvatarActivityProvider>
     <div className="min-h-screen bg-[var(--background)]">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[var(--surface)] border-b border-[var(--border)]">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[var(--surface)]/80 backdrop-blur-lg border-b border-[var(--border)]">
         <div className="flex items-center justify-between px-4 h-14">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[var(--primary)]" />
+            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)]" />
             <span className="font-heading font-semibold text-base text-[var(--foreground)]">Chaduvkondi</span>
           </Link>
           <div className="flex items-center gap-2">
+            <span className="text-sm" title={moodConfig.label}>{moodConfig.icon}</span>
             <ThemeToggle />
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-md hover:bg-[var(--soft)] transition-colors text-[var(--foreground)]">
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -132,16 +113,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-[var(--foreground)]/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-[var(--foreground)]/20 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-30 h-full w-60 bg-[var(--surface)] border-r border-[var(--border)] transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed top-0 left-0 z-30 h-full w-60 bg-[var(--surface)]/80 backdrop-blur-lg border-r border-[var(--border)] transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-5 border-b border-[var(--border)]">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-md bg-[var(--primary)] flex items-center justify-center text-[var(--background)] text-xs font-heading font-semibold group-hover:bg-[var(--primary-light)] transition-colors duration-200">C</div>
+              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] flex items-center justify-center text-[var(--background)] text-xs font-heading font-semibold shadow-md group-hover:shadow-lg transition-all duration-200">C</div>
               <div>
                 <span className="font-heading font-semibold text-base text-[var(--foreground)]">Chaduvkondi</span>
                 <p className="text-xs text-[var(--muted)]">Mastery Platform</p>
@@ -158,9 +139,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive
-                      ? "bg-[var(--primary)] text-[var(--background)]"
+                      ? "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-light)] text-[var(--background)] shadow-sm"
                       : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--soft)]"
                   }`}
                 >
@@ -174,9 +155,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 href="/admin"
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                   pathname.startsWith("/admin")
-                    ? "bg-[var(--primary)] text-[var(--background)]"
+                    ? "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-light)] text-[var(--background)] shadow-sm"
                     : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--soft)]"
                 }`}
               >
@@ -192,14 +173,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           {/* User Footer */}
-          <div className="p-4 border-t border-[var(--border)]">
+          <div className="p-4 border-t border-[var(--border)] bg-gradient-to-t from-[var(--soft)]/20">
             <div className="flex items-center gap-2.5 mb-2.5">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 ring-2 ring-[var(--primary)]/20">
                 {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                <AvatarFallback className="text-xs bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] text-[var(--background)]">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-[var(--foreground)]">{user.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate text-[var(--foreground)]">{user.name}</p>
+                  <span className="text-xs" title={moodConfig.label}>{moodConfig.icon}</span>
+                </div>
                 {user.tier && (
                   <span className="text-xs" style={{ color: user.tier.color }}>
                     {user.tier.icon} {user.tier.name}
@@ -220,36 +204,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <div className="lg:pl-60 pt-14 lg:pt-0">
-        <main className="p-5 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</main>
+        <main className="p-5 md:p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">{children}</main>
       </div>
-
-      {/* Avatar Companion – dynamically loaded (only if user has a photo and toggle is on) */}
-      {user.avatarUrl && avatarVisible && (
-        <AvatarCompanionDynamic
-          avatarUrl={user.avatarUrl}
-          shirtColor={user.avatarShirtColor}
-          pantsColor={user.avatarPantsColor}
-          hairColor={user.avatarHairColor}
-          skinColor={user.avatarSkinColor}
-        />
-      )}
-
-      {/* Floating toggle button for the avatar companion */}
-      {user.avatarUrl && (
-        <button
-          onClick={toggleAvatar}
-          className="fixed bottom-5 left-5 z-50 w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] shadow-md flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:shadow-lg transition-all duration-200 opacity-40 hover:opacity-100"
-          aria-label={avatarVisible ? "Hide avatar companion" : "Show avatar companion"}
-          title={avatarVisible ? "Hide avatar" : "Show avatar"}
-        >
-          {avatarVisible ? (
-            <EyeOff className="w-4 h-4" />
-          ) : (
-            <Eye className="w-4 h-4" />
-          )}
-        </button>
-      )}
     </div>
-    </AvatarActivityProvider>
   );
 }

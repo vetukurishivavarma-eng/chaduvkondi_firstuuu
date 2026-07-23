@@ -98,7 +98,7 @@ export default function OnboardingAvatarPage() {
           </span>
         </div>
 
-        <Card>
+        <Card className="glass animate-scale-in">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center mb-3">
               <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">

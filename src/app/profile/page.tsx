@@ -221,16 +221,16 @@ export default function ProfilePage() {
   const initials = user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 stagger-1 animate-fade-in-up">
         <Link href="/dashboard">
           <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--foreground)]">Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gradient">Profile</h1>
           <p className="text-[var(--muted)] mt-1">Manage your account and avatar</p>
         </div>
       </div>
@@ -242,7 +242,7 @@ export default function ProfilePage() {
       )}
 
       {/* User Info */}
-      <Card>
+      <Card className="glass stagger-2 animate-fade-in-up">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
             <User className="w-4 h-4 text-[var(--primary)]" />
@@ -264,7 +264,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Avatar Section */}
-      <Card>
+      <Card className="glass stagger-3 animate-fade-in-up">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
             <Sparkles className="w-4 h-4 text-[var(--primary)]" />

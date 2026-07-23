@@ -38,14 +38,14 @@ export default function ForgotPasswordPage() {
           <ArrowLeft className="w-4 h-4" />
           <span>Home</span>
         </Link>
-        <Card className="w-full max-w-sm animate-scale-in">
+        <Card className="w-full max-w-sm animate-scale-in glass">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center mb-3">
               <div className="w-12 h-12 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-[var(--primary)]" />
               </div>
             </div>
-            <CardTitle className="text-xl">Check your email</CardTitle>
+            <CardTitle className="text-xl text-gradient">Check your email</CardTitle>
             <CardDescription className="mt-2">
               If an account exists with <span className="font-medium text-[var(--foreground)]">{email}</span>,
               we&apos;ve sent a password reset link. It expires in 1 hour.
@@ -78,9 +78,9 @@ export default function ForgotPasswordPage() {
           <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
 
-        <Card>
+        <Card className="glass animate-scale-in">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">Forgot password?</CardTitle>
+            <CardTitle className="text-xl text-gradient">Forgot password?</CardTitle>
             <CardDescription>Enter your email and we&apos;ll send you a reset link</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>

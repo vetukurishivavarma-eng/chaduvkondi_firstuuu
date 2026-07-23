@@ -22,6 +22,28 @@ enum QuizType {
   diagnostic
   practice
   spaced_repetition
+  code_challenge
+}
+
+enum UserMood {
+  chill
+  excited
+  focused
+  tired
+  goofy
+  sleepy
+  hungry
+  grumpy
+  anxious
+  confident
+}
+
+enum BadgeCategory {
+  mastery
+  streak
+  quiz
+  social
+  special
 }
 
 model User {
@@ -30,6 +52,7 @@ model User {
   password  String
   name      String
   role      UserRole @default(learner)
+  bio       String   @default("")
   tierId           String?
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
@@ -39,26 +62,40 @@ model User {
   avatarPantsColor   String   @default("#2D4635")
   avatarHairColor    String   @default("#4A3728")
   avatarSkinColor    String   @default("#E8C4A0")
+  mood               UserMood @default(chill)
+  currentTrackId     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
   tier              TierDefinition?    @relation(fields: [tierId], references: [id])
+  currentTrack      Track?             @relation(fields: [currentTrackId], references: [id])
   quizAttempts      QuizAttempt[]
   masteryScores     MasteryScore[]
   leaderboardSnaps  LeaderboardSnapshot[]
   spacedRepetitions SpacedRepetition[]
+  badges            UserBadge[]
+  followers         Follow[]          @relation("following")
+  following         Follow[]          @relation("follower")
+  challengeSubmissions ChallengeSubmission[]
+  dailyChallenges       UserDailyChallenge[]
+  seasonScores          UserSeasonScore[]
 }
 
 model Track {
   id          String @id @default(cuid())
   name        String @unique
   description String
+  longDescription String @default("")
   icon        String @default("📚")
   color       String @default("#6366f1")
+  difficulty  String @default("Beginner")
+  popularity  Int    @default(0)
   isActive    Boolean @default(true)
   createdAt   DateTime @default(now())
 
-  subDomains SubDomain[]
+  subDomains  SubDomain[]
+  users       User[]
+  quizAttempts QuizAttempt[]
 }
 
 model SubDomain {
@@ -86,11 +123,13 @@ model Concept {
   resources         Resource[]
   masteryScores     MasteryScore[]
   spacedRepetitions SpacedRepetition[]
+  codeChallenges    CodeChallenge[]
 }
 
 model Question {
   id               String  @id @default(cuid())
   text             String
+  codeSnippet      String  @default("")
   conceptId        String
   difficultyWeight Float   @default(1.0)
   explanation      String
@@ -128,6 +167,7 @@ model Resource {
 model QuizAttempt {
   id          String   @id @default(cuid())
   userId      String
+  trackId     String?
   type        QuizType @default(practice)
   score       Float?
   totalWeight Float?
@@ -136,6 +176,7 @@ model QuizAttempt {
   completedAt DateTime?
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track      Track?      @relation(fields: [trackId], references: [id])
   answerLogs AnswerLog[]
 }
 
@@ -204,4 +245,139 @@ model SpacedRepetition {
   concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
 
   @@unique([userId, conceptId])
+}
+
+model Badge {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String
+  icon        String         @default("🏆")
+  color       String         @default("#F59E0B")
+  category    BadgeCategory  @default(mastery)
+  criteria    String         @default("")
+  maxProgress Int            @default(1)
+  createdAt   DateTime       @default(now())
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  progress  Int      @default(0)
+  earned    Boolean  @default(false)
+  earnedAt  DateTime?
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model CodeChallenge {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  difficulty      String   @default("easy")
+  templateCode    String   @default("")
+  solutionCode    String   @default("")
+  testCases       String   @default("[]")
+  language        String   @default("python")
+  conceptId       String
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  concept       Concept                @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  submissions   ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id              String   @id @default(cuid())
+  userId          String
+  challengeId     String
+  code            String
+  passed          Boolean  @default(false)
+  score           Float?   @default(0)
+  executionTimeMs Int?
+  createdAt       DateTime @default(now())
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge CodeChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+}
+
+model DailyChallenge {
+  id          String   @id @default(cuid())
+  date        DateTime @unique // date-only (normalized to midnight)
+  title       String
+  description String
+  type        String   @default("quiz") // quiz, perfect_score, streak, concepts
+  target      Int      @default(5) // e.g., answer 5 questions
+  reward      Int      @default(50) // bonus XP or points
+  icon        String   @default("🎯")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  userProgress UserDailyChallenge[]
+}
+
+model UserDailyChallenge {
+  id           String   @id @default(cuid())
+  userId       String
+  challengeId  String
+  progress     Int      @default(0)
+  completed    Boolean  @default(false)
+  claimed      Boolean  @default(false)
+  completedAt  DateTime?
+  claimedAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+}
+
+model LeaderboardSeason {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  period      String   @default("weekly") // weekly, monthly
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  isFinished  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  userScores  UserSeasonScore[]
+}
+
+model UserSeasonScore {
+  id        String   @id @default(cuid())
+  userId    String
+  seasonId  String
+  score     Float    @default(0)
+  rank      Int?
+  quizzes   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season  LeaderboardSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
 }

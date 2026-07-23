@@ -5,7 +5,7 @@ import { successResponse, errorResponse, handleApiError } from "@/lib/api-helper
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, mood } = await request.json();
 
     if (!email || !password || !name) {
       return errorResponse("Missing required fields", 400);
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         name,
+        mood: mood || "chill",
         tierId: sparkTier?.id || null,
       },
     });

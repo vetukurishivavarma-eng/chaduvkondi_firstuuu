@@ -17,6 +17,8 @@ import {
   Loader2,
   LayoutDashboard,
   ArrowLeft,
+  Calendar,
+  ChevronDown,
 } from "lucide-react";
 
 interface LeaderboardEntry {
@@ -39,24 +41,61 @@ interface CurrentUserData {
   tier: { name: string; color: string; icon: string } | null;
   percentile: number;
   totalLearners: number;
+  seasonRank: number | null;
+}
+
+interface Season {
+  id: string;
+  name: string;
+  period: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  isFinished: boolean;
 }
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUserData | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+  const [period, setPeriod] = useState("current");
   const [loading, setLoading] = useState(true);
+  const [seasonDropdownOpen, setSeasonDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/leaderboard")
+  function fetchLeaderboard(seasonId?: string | null, periodFilter?: string) {
+    setLoading(true);
+    let url = "/api/leaderboard?";
+    if (seasonId) url += `seasonId=${seasonId}&`;
+    if (periodFilter) url += `period=${periodFilter}`;
+    
+    fetch(url)
       .then((res) => res.json())
       .then((res) => {
         if (res.success) {
           setLeaderboard(res.data.leaderboard);
           setCurrentUser(res.data.currentUser);
+          setSeasons(res.data.seasons || []);
         }
       })
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    fetchLeaderboard();
   }, []);
+
+  function switchSeason(seasonId: string | null) {
+    setActiveSeasonId(seasonId);
+    setSeasonDropdownOpen(false);
+    fetchLeaderboard(seasonId);
+  }
+
+  function switchPeriod(newPeriod: string) {
+    setPeriod(newPeriod);
+    setActiveSeasonId(null);
+    fetchLeaderboard(null, newPeriod);
+  }
 
   if (loading) {
     return (
@@ -82,28 +121,88 @@ export default function LeaderboardPage() {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header with Dashboard link */}
-      <div className="flex items-center justify-between">
+  return (      <div className="space-y-6 animate-fade-in">
+      {/* Header with Season Selector + Dashboard link */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 stagger-1 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--foreground)]">Leaderboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gradient">Leaderboard</h1>
           <p className="text-[var(--muted)] mt-1">
             See how you stack up against other learners
           </p>
         </div>
-        <Link href="/dashboard">
-          <Button variant="outline" size="sm" className="gap-2">
-            <LayoutDashboard className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-            <ArrowLeft className="w-3 h-3" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Season Selector */}
+          {seasons.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setSeasonDropdownOpen(!seasonDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--soft)] transition-colors text-xs font-medium"
+              >
+                <Calendar className="w-3.5 h-3.5 text-[var(--primary)]" />
+                <span className="text-[var(--foreground)]">
+                  {activeSeasonId
+                    ? seasons.find(s => s.id === activeSeasonId)?.name || "Season"
+                    : period === "current" ? "All Time" : period === "weekly" ? "This Week" : "This Month"}
+                </span>
+                <ChevronDown className={`w-3 h-3 text-[var(--muted)] transition-transform ${seasonDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {seasonDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setSeasonDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg z-20 overflow-hidden animate-scale-in">
+                    <button
+                      onClick={() => { setPeriod("current"); setActiveSeasonId(null); setSeasonDropdownOpen(false); fetchLeaderboard(null, "current"); }}
+                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${period === "current" && !activeSeasonId ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--soft)]"}`}
+                    >
+                      All Time
+                    </button>
+                    <button
+                      onClick={() => switchPeriod("weekly")}
+                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${period === "weekly" ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--soft)]"}`}
+                    >
+                      This Week
+                    </button>
+                    <button
+                      onClick={() => switchPeriod("monthly")}
+                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${period === "monthly" ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--soft)]"}`}
+                    >
+                      This Month
+                    </button>
+                    {seasons.length > 0 && <div className="h-px bg-[var(--border)] mx-3" />}
+                    {seasons.map((season) => (
+                      <button
+                        key={season.id}
+                        onClick={() => switchSeason(season.id)}
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors ${activeSeasonId === season.id ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--soft)]"}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {season.name}
+                          {season.isActive && <span className="text-[10px] text-emerald-500 font-normal">Active</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <Link href="/dashboard">
+            <Button variant="outline" size="sm" className="gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+              <ArrowLeft className="w-3 h-3" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Current User Stats */}
       {currentUser && (
-        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
+        <Card className="glass stagger-2 animate-fade-in-up overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex items-center gap-4">
@@ -157,7 +256,7 @@ export default function LeaderboardPage() {
       )}
 
       {/* Leaderboard Table */}
-      <Card>
+      <Card className="glass stagger-3 animate-fade-in-up">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg text-[var(--foreground)]">
             <Users className="w-5 h-5 text-[var(--primary)]" />

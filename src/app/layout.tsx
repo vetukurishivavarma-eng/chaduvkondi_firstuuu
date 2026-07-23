@@ -16,17 +16,25 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Chaduvkondi — Mastery-Based Learning Platform",
+  title: "Chaduvkondi — Multi-Language Mastery Platform",
   description:
-    "An adaptive quiz-based learning platform that identifies weaknesses, provides instant remediation, and reinforces learning through spaced repetition. Test first. Master forever.",
+    "Master Python, JavaScript, TypeScript, Java, Go, Rust, and Salesforce with adaptive quizzes. Instant remediation, spaced repetition, and mastery-based learning.",
   keywords: [
     "learning",
     "quiz",
     "mastery",
+    "programming",
     "Salesforce",
+    "Python",
+    "JavaScript",
+    "TypeScript",
+    "Java",
+    "Go",
+    "Rust",
     "adaptive learning",
     "spaced repetition",
     "Chaduvkondi",
+    "code challenges",
   ],
 };
 

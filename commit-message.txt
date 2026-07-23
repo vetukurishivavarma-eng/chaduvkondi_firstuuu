@@ -1,0 +1,24 @@
+Add FastAPI track + gamification + glass morphism UI
+
+🚀 New Tracks: 10th track - FastAPI (beginner to expert)
+  - Fundamentals: routes, Pydantic, DI, error handling
+  - Database & Async: SQLAlchemy, Alembic, WebSockets
+  - Auth, Testing & Deployment: JWT, pytest, Docker
+
+🎮 Gamification:
+  - Daily challenges with auto-progress + reward claiming
+  - 30-day activity heatmap + streak visualization
+  - Leaderboard seasons with period selector
+  - Streak milestones (3/7/14/30/60/90/365 days)
+
+✨ UI Overhaul:
+  - Glass morphism (glass class) on ALL pages
+  - Entrance animations (fade-in, scale-in, slide-up, stagger)
+  - Card hover effects (card-lift, card-bounce)
+  - Gradient text headings
+
+🔄 Other:
+  - Mood/state selector on signup (6 moods)
+  - Meme-based quiz feedback per mood
+  - 3D avatar removed from dashboard
+  - UserMood enum in schema

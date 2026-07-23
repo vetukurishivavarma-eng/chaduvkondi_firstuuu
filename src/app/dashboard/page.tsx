@@ -17,10 +17,33 @@ import {
   BookOpen,
   Sparkles,
   X,
+  Layers,
+  ChevronDown,
+  Code2,
+  Flame,
 } from "lucide-react";
+import StreakVisualization from "@/components/streak-visualization";
+import DailyChallenge from "@/components/daily-challenge";
+
+interface TrackProgress {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  score: number;
+  conceptsMastered: number;
+  totalConcepts: number;
+  isActive: boolean;
+}
 
 interface DashboardData {
-  user: { name: string; email: string; tier: { name: string; color: string; icon: string } | null; avatarUrl?: string | null };
+  user: {
+    name: string;
+    email: string;
+    tier: { name: string; color: string; icon: string } | null;
+    avatarUrl?: string | null;
+    currentTrackId?: string | null;
+  };
   stats: {
     overallScore: number;
     conceptsMastered: number;
@@ -31,32 +54,76 @@ interface DashboardData {
     nextTier: { name: string; minScore: number } | null;
   };
   weakConcepts: Array<{ id: string; name: string; subDomain: string; score: number }>;
-  recentActivity: Array<{ id: string; type: string; score: number; completedAt: string; conceptCount: number }>;
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    score: number;
+    completedAt: string;
+    conceptCount: number;
+    trackName: string | null;
+    trackIcon: string | null;
+  }>;
   subDomainScores: Array<{ name: string; score: number; color: string }>;
   spacedDue: number;
+  tracks: TrackProgress[];
+  allTracks: Array<{ id: string; name: string; icon: string; color: string }>;
+  activeTrackId: string;
 }
+
+const TRACK_ICONS: Record<string, string> = {
+  "Salesforce Developer": "☁️",
+  "Python": "🐍",
+  "JavaScript / TypeScript": "💛",
+  "Java": "☕",
+  "Go": "🔵",
+  "Rust": "🦀",
+  "Angular": "🅰️",
+  "Django Backend": "🎯",
+  "Full DevOps": "🛠️",
+  "FastAPI": "⚡",
+};
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
+  const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(
-    // Lazy initializer - avoids flash on re-mount
     () => sessionStorage.getItem("avatarBannerDismissed") === "true"
   );
 
-  useEffect(() => {
-    fetch("/api/dashboard")
+  const fetchDashboard = (trackId?: string) => {
+    setLoading(true);
+    const url = trackId ? `/api/dashboard?trackId=${trackId}` : "/api/dashboard";
+    fetch(url)
       .then((res) => res.json())
-      .then((res) => { if (res.success) setData(res.data); })
+      .then((res) => {
+        if (res.success) {
+          setData(res.data);
+          if (!activeTrackId && res.data.activeTrackId) {
+            setActiveTrackId(res.data.activeTrackId);
+          }
+        }
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDashboard();
   }, []);
+
+  function switchTrack(trackId: string) {
+    setActiveTrackId(trackId);
+    setTrackDropdownOpen(false);
+    fetchDashboard(trackId);
+  }
 
   function dismissBanner() {
     setBannerDismissed(true);
     sessionStorage.setItem("avatarBannerDismissed", "true");
   }
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-2 text-[var(--muted)]">
@@ -77,8 +144,9 @@ export default function DashboardPage() {
     );
   }
 
-  const { stats, weakConcepts, recentActivity, subDomainScores, spacedDue } = data;
+  const { stats, weakConcepts, recentActivity, subDomainScores, spacedDue, tracks } = data;
   const tier = data.user.tier;
+  const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
   return (
     <div className="space-y-5">
@@ -110,17 +178,63 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Welcome Header */}
+      {/* Track Switcher + Welcome */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-            Welcome back, {data.user.name.split(" ")[0]}
-          </h1>
-          <p className="text-sm text-[var(--muted)] mt-0.5">
-            {spacedDue > 0
-              ? `${spacedDue} concept${spacedDue > 1 ? "s" : ""} due for review`
-              : "You're all caught up! Take a practice quiz to keep learning."}
-          </p>
+        <div className="flex items-center gap-3">
+          {/* Track selector */}
+          <div className="relative">
+            <button
+              onClick={() => setTrackDropdownOpen(!trackDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--soft)] transition-colors text-sm font-medium"
+            >
+              {activeTrack && (
+                <>
+                  <span>{activeTrack.icon || TRACK_ICONS[activeTrack.name] || "📚"}</span>
+                  <span className="text-[var(--foreground)]">{activeTrack.name}</span>
+                </>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 text-[var(--muted)] transition-transform duration-200 ${trackDropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {trackDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setTrackDropdownOpen(false)} />
+                <div className="absolute top-full left-0 mt-1 w-56 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-lg z-20 overflow-hidden animate-scale-in">
+                  {tracks.map((track) => (
+                    <button
+                      key={track.id}
+                      onClick={() => switchTrack(track.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
+                        track.isActive
+                          ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium"
+                          : "text-[var(--foreground)] hover:bg-[var(--soft)]"
+                      }`}
+                    >
+                      <span className="text-lg">{track.icon || TRACK_ICONS[track.name] || "📚"}</span>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm">{track.name}</p>
+                        <p className="text-xs text-[var(--muted)]">{track.score}% mastered</p>
+                      </div>
+                      {track.isActive && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div>
+            <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+              Welcome back, {data.user.name.split(" ")[0]}
+            </h1>
+            <p className="text-sm text-[var(--muted)] mt-0.5">
+              {spacedDue > 0
+                ? `${spacedDue} concept${spacedDue > 1 ? "s" : ""} due for review`
+                : "You're all caught up! Take a practice quiz to keep learning."}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/quiz"><Button size="sm" className="gap-1.5"><Brain className="w-3.5 h-3.5" />Start Quiz</Button></Link>
@@ -147,8 +261,8 @@ export default function DashboardPage() {
             <CardTitle className="text-2xl text-[var(--foreground)]">{stats.conceptsMastered}<span className="text-sm text-[var(--muted)] font-normal"> / {stats.totalConcepts}</span></CardTitle>
           </CardHeader>
           <CardContent>
-            <Progress value={(stats.conceptsMastered / stats.totalConcepts) * 100} className="h-1.5" />
-            <p className="text-xs text-[var(--muted)] mt-1.5">{Math.round((stats.conceptsMastered / stats.totalConcepts) * 100)}% of concepts</p>
+            <Progress value={stats.totalConcepts > 0 ? (stats.conceptsMastered / stats.totalConcepts) * 100 : 0} className="h-1.5" />
+            <p className="text-xs text-[var(--muted)] mt-1.5">{stats.totalConcepts > 0 ? Math.round((stats.conceptsMastered / stats.totalConcepts) * 100) : 0}% of concepts</p>
           </CardContent>
         </Card>
 
@@ -173,22 +287,88 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Per-track progress summary */}
+      {tracks.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+              <Layers className="w-4 h-4 text-[var(--primary)]" />
+              Track Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
+              {tracks.map((track) => (
+                <button
+                  key={track.id}
+                  onClick={() => switchTrack(track.id)}
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
+                    track.id === activeTrackId
+                      ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                      : "border-[var(--border)] hover:border-[var(--primary)]/30 hover:bg-[var(--soft)]/50"
+                  }`}
+                >
+                  <span className="text-xl">{track.icon || TRACK_ICONS[track.name] || "📚"}</span>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-xs font-medium truncate text-[var(--foreground)]">{track.name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Progress value={track.score} className="h-1 flex-1" />
+                      <span className="text-[10px] text-[var(--muted)] w-7 text-right">{track.score}%</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Daily Challenge & Streak row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-1 space-y-4">
+          <DailyChallenge />
+        </div>
+        <div className="lg:col-span-2">
+          <Card className="glass">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                <Flame className="w-4 h-4 text-orange-500" />
+                Learning Streak
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StreakVisualization currentStreak={stats.currentStreak} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Sub-Domain Scores */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 glass">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><BarChart3 className="w-4 h-4 text-[var(--primary)]" />Sub-Domain Mastery</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+              <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
+              {activeTrack ? `${activeTrack.name} Sub-Domains` : "Sub-Domain Mastery"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {subDomainScores.map((sd) => (
-              <div key={sd.name} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-[var(--foreground)]">{sd.name}</span>
-                  <span className="text-[var(--muted)]">{sd.score}%</span>
-                </div>
-                <Progress value={sd.score} className="h-1.5" />
+            {subDomainScores.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-6 text-center">
+                <Code2 className="w-7 h-7 text-[var(--muted)]" />
+                <p className="text-sm text-[var(--muted)]">Take a quiz to see your sub-domain scores</p>
               </div>
-            ))}
+            ) : (
+              subDomainScores.map((sd) => (
+                <div key={sd.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-[var(--foreground)]">{sd.name}</span>
+                    <span className="text-[var(--muted)]">{sd.score}%</span>
+                  </div>
+                  <Progress value={sd.score} className="h-1.5" />
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -196,7 +376,10 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><AlertCircle className="w-4 h-4 text-[var(--secondary)]" />Focus Areas</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                <AlertCircle className="w-4 h-4 text-[var(--secondary)]" />
+                Focus Areas
+              </CardTitle>
               <CardDescription>Concepts needing the most attention</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -241,7 +424,10 @@ export default function DashboardPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]"><Clock className="w-4 h-4 text-[var(--primary)]" />Recent Activity</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+            <Clock className="w-4 h-4 text-[var(--primary)]" />
+            Recent Activity
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {recentActivity.length === 0 ? (
@@ -261,7 +447,14 @@ export default function DashboardPage() {
                        <Brain className="w-3.5 h-3.5 text-[var(--primary)]" />}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[var(--foreground)] capitalize">{activity.type.replace("_", " ")}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-[var(--foreground)] capitalize">{activity.type.replace("_", " ")}</p>
+                        {activity.trackName && (
+                          <span className="text-[10px] text-[var(--muted)]">
+                            {activity.trackIcon || "📚"} {activity.trackName}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-[var(--muted)]">{activity.conceptCount} concept{activity.conceptCount > 1 ? "s" : ""} • {new Date(activity.completedAt).toLocaleDateString()}</p>
                     </div>
                   </div>

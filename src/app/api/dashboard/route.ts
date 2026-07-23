@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { calculateOverallMastery, calculateMasteryScore } from "@/lib/utils";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
@@ -11,21 +10,49 @@ export async function GET() {
     }
 
     const userId = session.id;
+    const { searchParams } = new URL(request.url);
+    const trackId = searchParams.get("trackId");
 
-    // Get total concepts
-    const totalConcepts = await prisma.concept.count();
+    // Get all available tracks
+    const allTracks = await prisma.track.findMany({
+      where: { isActive: true },
+      orderBy: { popularity: "desc" },
+    });
+
+    // Get user info
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { tier: true, currentTrack: true },
+    });
+
+    // Determine which track to show stats for
+    const activeTrackId = trackId || user?.currentTrackId || allTracks[0]?.id;
+
+    // Get concepts - either for a specific track or all tracks
+    const conceptFilter = activeTrackId
+      ? { subDomain: { trackId: activeTrackId } }
+      : {};
+
+    const totalConcepts = await prisma.concept.count({
+      where: activeTrackId ? conceptFilter : undefined,
+    });
 
     // Get all mastery scores for this user
     const masteryScores = await prisma.masteryScore.findMany({
       where: { userId },
       include: {
         concept: {
-          include: { subDomain: { select: { name: true } } },
+          include: { subDomain: { select: { name: true, trackId: true } } },
         },
       },
     });
 
-    const overallScore = calculateOverallMastery(masteryScores);
+    // Filter mastery scores by track if specified
+    const filteredMastery = activeTrackId
+      ? masteryScores.filter((ms) => ms.concept.subDomain.trackId === activeTrackId)
+      : masteryScores;
+
+    const overallScore = calculateOverallMastery(filteredMastery);
 
     // Determine tier
     const tiers = await prisma.tierDefinition.findMany({ orderBy: { minScore: "asc" } });
@@ -43,7 +70,7 @@ export async function GET() {
       : 100;
 
     // Weak concepts (bottom 5 by score)
-    const weakConcepts = masteryScores
+    const weakConcepts = filteredMastery
       .filter((ms) => ms.score < 60)
       .sort((a, b) => a.score - b.score)
       .slice(0, 5)
@@ -55,15 +82,21 @@ export async function GET() {
       }));
 
     // Concepts mastered (> 80%)
-    const conceptsMastered = masteryScores.filter((ms) => ms.score >= 80).length;
+    const conceptsMastered = filteredMastery.filter((ms) => ms.score >= 80).length;
 
-    // Recent quiz activity
+    // Recent quiz activity (filtered by track if specified)
+    const recentQuizFilter: any = { userId, completed: true };
+    if (activeTrackId) {
+      recentQuizFilter.trackId = activeTrackId;
+    }
+
     const recentQuizzes = await prisma.quizAttempt.findMany({
-      where: { userId, completed: true },
+      where: recentQuizFilter,
       orderBy: { completedAt: "desc" },
       take: 10,
       include: {
         answerLogs: { select: { id: true } },
+        track: { select: { name: true, icon: true, color: true } },
       },
     });
 
@@ -73,11 +106,13 @@ export async function GET() {
       score: q.score || 0,
       completedAt: q.completedAt?.toISOString() || q.startedAt.toISOString(),
       conceptCount: q.answerLogs.length,
+      trackName: q.track?.name || null,
+      trackIcon: q.track?.icon || null,
     }));
 
     // Sub-domain scores
     const subDomainMastery: Record<string, { totalScore: number; count: number }> = {};
-    for (const ms of masteryScores) {
+    for (const ms of filteredMastery) {
       const subDomainName = ms.concept.subDomain.name;
       if (!subDomainMastery[subDomainName]) {
         subDomainMastery[subDomainName] = { totalScore: 0, count: 0 };
@@ -91,9 +126,20 @@ export async function GET() {
       "Apex Programming": "#8b5cf6",
       "Lightning Web Components": "#3b82f6",
       "Flow & Automation": "#22c55e",
-      "Data Modeling": "#f59e0b",
-      "Integration & APIs": "#ef4444",
-      "Deployment & DevOps": "#06b6d4",
+      "Python Fundamentals": "#3776AB",
+      "Object-Oriented Python": "#FFD43B",
+      "Web Development & Data Science": "#306998",
+      "JavaScript Fundamentals": "#F7DF1E",
+      "Async JavaScript & TypeScript": "#3178C6",
+      "Node.js & React": "#61DAFB",
+      "Java Fundamentals": "#ED8B00",
+      "Java OOP & Collections": "#BDB76B",
+      "Spring Boot & Testing": "#6DB33F",
+      "Go Fundamentals": "#00ADD8",
+      "Concurrency & HTTP": "#5DC9E2",
+      "Rust Fundamentals": "#DEA584",
+      "Traits & Error Handling": "#CE422B",
+      "Advanced Rust": "#000000",
     };
 
     const subDomainScores = Object.entries(subDomainMastery).map(([name, data]) => ({
@@ -105,16 +151,49 @@ export async function GET() {
     // Current streak
     const streak = await calculateStreak(userId);
 
-    // Spaced repetition due
-    const spacedDue = await prisma.spacedRepetition.count({
-      where: { userId, nextReviewAt: { lte: new Date() } },
-    });
+    // Spaced repetition due (filtered by track if specified)
+    const spacedFilter: any = { userId, nextReviewAt: { lte: new Date() } };
+    if (activeTrackId) {
+      const trackConceptIds = (
+        await prisma.concept.findMany({
+          where: { subDomain: { trackId: activeTrackId } },
+          select: { id: true },
+        })
+      ).map((c) => c.id);
+      spacedFilter.conceptId = { in: trackConceptIds };
+    }
 
-    // Get user with tier
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { tier: true },
-    });
+    const spacedDue = await prisma.spacedRepetition.count({ where: spacedFilter });
+
+    // Per-track progress summary
+    const trackProgress = await Promise.all(
+      allTracks.map(async (track) => {
+        const trackConceptIds = (
+          await prisma.concept.findMany({
+            where: { subDomain: { trackId: track.id } },
+            select: { id: true },
+          })
+        ).map((c) => c.id);
+
+        const trackMastery = masteryScores.filter((ms) =>
+          trackConceptIds.includes(ms.conceptId)
+        );
+        const trackScore = calculateOverallMastery(trackMastery);
+        const trackConceptsTotal = trackConceptIds.length;
+        const trackConceptsMastered = trackMastery.filter((ms) => ms.score >= 80).length;
+
+        return {
+          id: track.id,
+          name: track.name,
+          icon: track.icon,
+          color: track.color,
+          score: trackScore,
+          conceptsMastered: trackConceptsMastered,
+          totalConcepts: trackConceptsTotal,
+          isActive: track.id === activeTrackId,
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -124,6 +203,7 @@ export async function GET() {
           email: session.email,
           tier: user?.tier || null,
           avatarUrl: user?.avatarUrl || null,
+          currentTrackId: user?.currentTrackId,
         },
         stats: {
           overallScore,
@@ -140,12 +220,21 @@ export async function GET() {
         recentActivity,
         subDomainScores,
         spacedDue,
+        tracks: trackProgress,
+        allTracks,
+        activeTrackId,
       },
     });
   } catch (error) {
     console.error("Dashboard API error:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
+}
+
+function calculateOverallMastery(scores: { score: number }[]): number {
+  if (scores.length === 0) return 0;
+  const total = scores.reduce((sum, s) => sum + s.score, 0);
+  return Math.round(total / scores.length);
 }
 
 async function calculateStreak(userId: string): Promise<number> {

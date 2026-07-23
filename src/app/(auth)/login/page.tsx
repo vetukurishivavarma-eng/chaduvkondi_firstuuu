@@ -62,9 +62,9 @@ export default function LoginPage() {
           <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
 
-        <Card>
+        <Card className="glass animate-scale-in">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardTitle className="text-xl text-gradient">Welcome back</CardTitle>
             <CardDescription>Sign in to continue your learning journey</CardDescription>
           </CardHeader>
 

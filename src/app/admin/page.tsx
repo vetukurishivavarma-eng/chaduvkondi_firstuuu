@@ -114,11 +114,11 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between stagger-1 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin Panel</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gradient">Admin Panel</h1>
+          <p className="text-[var(--muted)] mt-1">
             Manage tracks, concepts, questions, and resources
           </p>
         </div>
@@ -203,14 +203,14 @@ function AdminOverview() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {statCards.map((card) => (
-        <Card key={card.label}>
+        <Card key={card.label} className={`glass card-lift`}>
           <CardContent className="p-6 flex items-center gap-4">
             <div className={`p-3 rounded-xl bg-gradient-to-br ${card.color} shadow-lg`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">{card.label}</p>
-              <p className="text-2xl font-bold">{card.value}</p>
+              <p className="text-sm text-[var(--muted)]">{card.label}</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">{card.value}</p>
             </div>
           </CardContent>
         </Card>
@@ -241,7 +241,7 @@ function AdminTracks() {
       </div>
 
       {tracks.map((track) => (
-        <Card key={track.id} className="overflow-hidden">
+        <Card key={track.id} className="overflow-hidden glass card-lift">
           <CardHeader className="pb-3" style={{ borderLeft: `4px solid ${track.color}` }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ function AdminQuestions() {
       ) : (
         <div className="space-y-3">
           {questions.map((q) => (
-            <Card key={q.id}>
+            <Card key={q.id} className="glass">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -338,7 +338,7 @@ function AdminResources() {
         <div className="py-8 text-center text-zinc-500">No resources found.</div>
       ) : (
         concepts.map((concept: any) => (
-          <Card key={concept.id}>
+          <Card key={concept.id} className="glass card-lift">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{concept.name}</CardTitle>
               <CardDescription>
@@ -396,7 +396,7 @@ function AdminUsers() {
       ) : (
         <div className="space-y-3">
           {users.map((u) => (
-            <Card key={u.id}>
+            <Card key={u.id} className="glass">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

@@ -3,6 +3,148 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateMasteryScore, calculateSpacedRepetitionInterval } from "@/lib/utils";
 
+// ─── Mood-Based Meme Reactions ────────────────────────────────────────────────
+const MOOD_MEMES: Record<string, { correct: string[]; wrong: string[]; encouragement: string[] }> = {
+  hype: {
+    correct: [
+      "LET'S GOOOOO! 🔥 YOU'RE ON FIRE!",
+      "ABSOLUTE LEGEND! 💪 THAT'S HOW IT'S DONE!",
+      "BOOM! Headshot! 🎯 You're unstoppable!",
+      "MAIN CHARACTER ENERGY! ⚡ Keep crushing it!",
+      "EAT. SLEEP. CODE. REPEAT. ✅ NAILED IT!",
+    ],
+    wrong: [
+      "NOT TODAY! But we GO AGANE! 🔄 You got this!",
+      "It's just a setback for the COMEBACK! 💥",
+      "Even LeBron misses shots. NEXT ONE'S YOURS! 🏀",
+      "ERROR 404: Correct answer not found. TRY AGAIN! 🔧",
+    ],
+    encouragement: [
+      "KEEP THAT ENERGY UP! 🚀",
+      "YOU'RE BUILDING SOMETHING GREAT! 🏗️",
+      "HUSTLE MODE: ACTIVATED! ⚡",
+    ],
+  },
+  chill: {
+    correct: [
+      "No worries, you got this 🌊 Smooth sailing.",
+      "Easy peasy lemon squeezy 🍋",
+      "Vibes are immaculate ✨ Nailed it.",
+      "Just another day of being awesome 😎",
+      "Smooth operator right here 🎵",
+    ],
+    wrong: [
+      "All good, that's what learning's about 🌱",
+      "Take a breath, it's part of the journey 🧘",
+      "Mistakes are just proof you're trying ✌️",
+      "No stress — the next one's yours 🎯",
+    ],
+    encouragement: [
+      "Stay in your flow state 🌊",
+      "Progress, not perfection 🌱",
+      "Good vibes only, keep going ✨",
+    ],
+  },
+  focused: {
+    correct: [
+      "Target acquired ✅ Direct hit!",
+      "Precision execution. Well calculated. 🎯",
+      "Another concept conquered. 📈",
+      "System: Optimized. Result: Correct. 🤖",
+      "Locked in. Loaded. Correct. 🎯",
+    ],
+    wrong: [
+      "Re-calibrating... Let's analyze this. 🔍",
+      "Data point collected. Adjusting strategy. 📊",
+      "Noted. This gap will be filled. ⚡",
+      "Logging error for future reference. 📝",
+    ],
+    encouragement: [
+      "Maintaining optimal learning trajectory 📈",
+      "Efficiency is key. You're building knowledge. 🧠",
+      "Stay locked in. Mastery incoming. 🎯",
+    ],
+  },
+  tired: {
+    correct: [
+      "Coffee-powered brain still works! ☕✅",
+      "Tired but TALENTED! 😴💪",
+      "Sleep is for the weak. (But go to bed anyway) 🛌",
+      "Somehow... someway... you got it right! 🎉",
+      "Fourth cup of coffee energy! ☕☕☕☕",
+    ],
+    wrong: [
+      "Brain fog is real 🌫️ Take a break maybe?",
+      "Maybe refill that coffee first ☕",
+      "It's okay, your CPU needs rest too 💤",
+      "Sleep > Code. But also... try again? 😅",
+    ],
+    encouragement: [
+      "You're doing great for someone running on fumes 💪",
+      "Rest is productive too! But you're still going! 🌟",
+      "Power nap energy coming soon! ⚡",
+    ],
+  },
+  stressed: {
+    correct: [
+      "Wait... you actually got that right! NICE! 😅✅",
+      "CRUSHED IT under pressure! 🏆",
+      "Imposter syndrome who? YOU BELONG HERE! 💪",
+      "The stress is working! (But please take breaks) 🧘",
+      "ONE LESS THING TO WORRY ABOUT! 🎉",
+    ],
+    wrong: [
+      "Breathe in... breathe out... you're learning 🧘",
+      "This is just part of the process. You're okay. 🌿",
+      "Rome wasn't built in a day. Neither is mastery. 🏛️",
+      "It's okay to not know everything. That's why we're here. 🤗",
+    ],
+    encouragement: [
+      "You're doing better than you think. Trust the process. 🌟",
+      "Small steps compound. You've got this. 🐢",
+      "Be kind to yourself. Learning IS progress. 🌱",
+    ],
+  },
+  confused: {
+    correct: [
+      "Wait, you got it right? NICE! 🤯✅",
+      "The confusion cleared! Look at you go! 🌟",
+      "It's starting to click! 🖱️🤯",
+      "Light bulb moment! 💡 You got it!",
+      "From 'what?' to 'aha!' in record time! ⚡",
+    ],
+    wrong: [
+      "Yeah, this stuff IS confusing. Let's break it down. 🧩",
+      "Welcome to the confusion club. We have snacks. 🍪",
+      "If it's confusing, that means you're learning something new! 🧠",
+      "The fog will clear. Keep pushing! 🌫️➡️☀️",
+    ],
+    encouragement: [
+      "Confusion is the first step to understanding! 🧠",
+      "Every expert was once confused. Keep going! 🌟",
+      "The dots will connect. Trust the process. 🔗",
+    ],
+  },
+};
+
+function getRandomMessage(messages: string[]): string {
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
+function getMoodReaction(mood: string, isCorrect: boolean): { message: string; emoji: string } {
+  const moodMemes = MOOD_MEMES[mood] || MOOD_MEMES.chill;
+  if (isCorrect) {
+    return {
+      message: getRandomMessage(moodMemes.correct),
+      emoji: mood === "hype" ? "🔥" : mood === "chill" ? "✨" : mood === "tired" ? "😴" : mood === "stressed" ? "😅" : mood === "confused" ? "🤯" : "✅",
+    };
+  }
+  return {
+    message: getRandomMessage(moodMemes.wrong),
+    emoji: mood === "hype" ? "💪" : mood === "chill" ? "🌱" : mood === "tired" ? "☕" : mood === "stressed" ? "🧘" : mood === "confused" ? "🧩" : "💪",
+  };
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -201,6 +343,14 @@ export async function POST(
           type: r.type,
         }));
 
+    // ─── Mood-based meme reaction ───────────────────────────────────────
+    const userWithMood = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: { mood: true },
+    });
+    const userMood = userWithMood?.mood || "chill";
+    const moodReaction = getMoodReaction(userMood, isCorrect);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -212,6 +362,7 @@ export async function POST(
         currentMastery: masteryScore?.score || 0,
         difficultyAdjustment,
         remediation,
+        moodReaction,
         nextReviewAt: await getNextReviewAt(session.id, question.conceptId),
       },
     });

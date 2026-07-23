@@ -77,8 +77,7 @@ function ResetPasswordForm() {
     );
   }
 
-  return (
-    <Card className="w-full max-w-sm animate-fade-in">
+  return (      <Card className="w-full max-w-sm animate-fade-in glass">
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-xl">Set new password</CardTitle>
         <CardDescription>Enter your new password below</CardDescription>

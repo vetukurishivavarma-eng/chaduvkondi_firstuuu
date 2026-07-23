@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { type = "practice", conceptIds, count = 10 } = body;
+    const { type = "practice", conceptIds, count = 10, trackId } = body;
 
     // Validate quiz type
-    if (!["diagnostic", "practice", "spaced_repetition"].includes(type)) {
+    if (!["diagnostic", "practice", "spaced_repetition", "code_challenge"].includes(type)) {
       return NextResponse.json({ success: false, error: "Invalid quiz type" }, { status: 400 });
     }
 
@@ -82,6 +82,8 @@ export async function POST(request: NextRequest) {
         take: count,
       })) as unknown as QuestionWithRelations[];
     } else {
+      // Build filter for questions - optionally filter by track
+      const trackFilter = trackId ? { concept: { subDomain: { trackId } } } : {};
       // Select questions based on weakest concepts (mastery-based adaptive)
       const masteryScores = await prisma.masteryScore.findMany({
         where: { userId: session.id },
@@ -89,11 +91,12 @@ export async function POST(request: NextRequest) {
         include: {
           concept: {
             include: {
+              subDomain: { select: { name: true, trackId: true } },
               questions: {
                 where: { isActive: true },
                 include: {
                   choices: { orderBy: { text: "asc" } },
-                  concept: { include: { subDomain: true } },
+                  concept: { include: { subDomain: { select: { name: true, trackId: true } } } },
                 },
                 take: 3,
               },
@@ -107,6 +110,8 @@ export async function POST(request: NextRequest) {
       const collectedQuestions: QuestionWithRelations[] = [];
 
       for (const ms of masteryScores) {
+        // Skip if track filter is active and concept doesn't belong to the track
+        if (trackId && ms.concept.subDomain?.trackId !== trackId) continue;
         for (const q of ms.concept.questions) {
           if (!questionIds.has(q.id)) {
             questionIds.add(q.id);
@@ -118,11 +123,15 @@ export async function POST(request: NextRequest) {
       // Fill remaining from untested concepts
       if (collectedQuestions.length < count) {
         const testedConceptIds = masteryScores.map((ms) => ms.conceptId);
+        const untestedWhere: any = {
+          conceptId: { notIn: testedConceptIds },
+          isActive: true,
+        };
+        if (trackId) {
+          untestedWhere.concept = { subDomain: { trackId } };
+        }
         const untestedQuestions = await prisma.question.findMany({
-          where: {
-            conceptId: { notIn: testedConceptIds },
-            isActive: true,
-          },
+          where: untestedWhere,
           include: {
             choices: { orderBy: { text: "asc" } },
             concept: { include: { subDomain: true } },
@@ -143,11 +152,15 @@ export async function POST(request: NextRequest) {
       if (collectedQuestions.length < count) {
         const remainingCount = count - collectedQuestions.length;
         const existingIds = Array.from(questionIds);
+        const randomWhere: any = {
+          id: { notIn: existingIds },
+          isActive: true,
+        };
+        if (trackId) {
+          randomWhere.concept = { subDomain: { trackId } };
+        }
         const randomQuestions = await prisma.question.findMany({
-          where: {
-            id: { notIn: existingIds },
-            isActive: true,
-          },
+          where: randomWhere,
           take: remainingCount,
           orderBy: { difficultyWeight: "asc" },
           include: {
@@ -174,10 +187,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create quiz attempt
+    // Create quiz attempt with optional track
     const quizAttempt = await prisma.quizAttempt.create({
       data: {
         userId: session.id,
+        trackId: trackId || undefined,
         type: type as any,
         completed: false,
       },
