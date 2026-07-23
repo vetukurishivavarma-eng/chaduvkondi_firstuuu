@@ -19,6 +19,8 @@ import {
   Layers,
   AlertCircle,
   BarChart3,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 
 interface DueConcept {
@@ -83,6 +85,24 @@ export default function SpacedRepetitionPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Back Navigation */}
+      <div className="flex items-center gap-2 stagger-1 animate-fade-in-up">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--soft)] transition-all"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Dashboard
+        </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--soft)] transition-all"
+        >
+          <Home className="w-3.5 h-3.5" />
+          Home
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between stagger-1 animate-fade-in-up">
         <div>

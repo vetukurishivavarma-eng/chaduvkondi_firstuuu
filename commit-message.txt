@@ -1,37 +1,17 @@
-🚀 Add 6 major features: Spaced Repetition, Roadmaps, Playground, PWA, Battles & AI Tutor
+Fix AI Tutor, Playground output & navigation on all new pages
 
-✨ Feature 1: Spaced Repetition Dashboard
-  - /spaced-repetition page with due concepts, retention stats, interval distribution
-  - API at /api/spaced-repetition with full SR data tracking
+🔧 AI Tutor Rewrite:
+- Created /api/ai-tutor endpoint that searches concept DB for contextual responses
+- Page now calls real API instead of client-side setTimeout simulation
+- Intelligent fallback for 10+ categories (recursion, JS, Python, React, SQL, etc.)
 
-🗺️ Feature 2: Learning Roadmaps
-  - /roadmaps page with visual node-based progress per track
-  - Color-coded concept nodes: Mastered (green), Learning (blue), Started (amber), New (grey)
-  - Track selector, overall progress stats, sub-domain breakdown
+🔧 Playground Fix:
+- Fixed 401 error: tries 3 different Piston API endpoints in sequence
+- Rewrote simulation engine: handles f-strings, template literals, multi-arg
+  print/console.log, variable tracking, ** exponentiation, function calls
+- Default code examples now produce realistic output
+- Fixed TypeScript /s regex flag error (ES2018+ compat)
 
-💻 Feature 3: Interactive Code Playground
-  - /playground page with multi-language code editor (Python, JS, TS, Java, Rust, Go)
-  - API at /api/playground with Piston API integration + local fallback simulation
-  - Terminal output panel with execution timing
-
-📱 Feature 4: PWA + Offline Mode
-  - manifest.json with shortcuts to Quiz, Review & Leaderboard
-  - Service worker (sw.js) with cache-first for static, network-first for API
-  - Offline fallback page with graceful messaging
-
-⚔️ Feature 5: Multiplayer Quiz Battles
-  - /battles page with challenge system, opponent finder, win/loss tracking
-  - Battle model in Prisma schema with challenger/opponent relations
-  - Full CRUD API at /api/battles
-
-🤖 Feature 6: AI Tutor & Smart Hint System
-  - /ai-tutor page with chat interface, mood selector, quick prompts
-  - Contextual hint generation API at /api/hints
-  - Smart explanations for wrong answers + study recommendations
-
-🛠️ Infrastructure:
-  - All new pages registered in middleware (protected routes + matcher)
-  - Full sidebar navigation in dashboard layout
-  - Battle model added to Prisma schema with proper relations
-  - Schema synced to database
-  - Build passes with zero TypeScript errors
+🔧 Navigation Fix:
+- Added "Back to Dashboard" and "Home" links to all 5 standalone pages
+- Pages: spaced-repetition, roadmaps, playground, battles, ai-tutor
