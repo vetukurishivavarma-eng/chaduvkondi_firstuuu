@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const { type = "practice", conceptIds, count = 10, trackId } = body;
 
     // Validate quiz type
-    if (!["diagnostic", "practice", "spaced_repetition", "code_challenge"].includes(type)) {
+    if (!["diagnostic", "practice", "spaced_repetition", "code_challenge", "speed_test"].includes(type)) {
       return NextResponse.json({ success: false, error: "Invalid quiz type" }, { status: 400 });
     }
 

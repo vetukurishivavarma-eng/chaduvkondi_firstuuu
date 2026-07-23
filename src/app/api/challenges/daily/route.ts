@@ -29,6 +29,7 @@ export async function GET() {
         { title: "Concept Explorer", description: "Master 2 new concepts", type: "concepts", target: 2, reward: 120, icon: "📚" },
         { title: "Speed Round", description: "Answer 15 questions", type: "quiz", target: 15, reward: 130, icon: "⚡" },
         { title: "Focus Session", description: "Complete a diagnostic quiz", type: "diagnostic", target: 1, reward: 200, icon: "🎯" },
+        { title: "Beat Your Best ⚡", description: "Beat your personal best Q/min in a speed test", type: "speed_test_beat_best", target: 1, reward: 250, icon: "🏆" },
       ];
 
       // Cycle based on day of year
@@ -36,11 +37,35 @@ export async function GET() {
       const typeIndex = dayOfYear % challengeTypes.length;
       const ct = challengeTypes[typeIndex];
 
+      // For speed test beat best challenges, show the user's current best in the description
+      let challengeDescription = ct.description;
+      if (ct.type === "speed_test_beat_best") {
+        const allSpeedAttempts = await prisma.quizAttempt.findMany({
+          where: {
+            userId,
+            type: "speed_test",
+            completed: true,
+          },
+          include: { answerLogs: { select: { isCorrect: true } } },
+        });
+        const bestHistorical = allSpeedAttempts
+          .filter((a) => a.completedAt && a.completedAt < today)
+          .reduce((best, a) => {
+            const answered = a.answerLogs.length;
+            if (answered === 0) return best;
+            const qpm = answered * 2;
+            return qpm > best ? qpm : best;
+          }, 0);
+        if (bestHistorical > 0) {
+          challengeDescription = `Beat your personal best of ${bestHistorical} Q/min in a speed test!`;
+        }
+      }
+
       challenge = await prisma.dailyChallenge.create({
         data: {
           date: today,
           title: ct.title,
-          description: ct.description,
+          description: challengeDescription,
           type: ct.type,
           target: ct.target,
           reward: ct.reward,
@@ -113,6 +138,46 @@ export async function GET() {
             },
           });
           progress = diagCount;
+          break;
+        }
+        case "speed_test_beat_best": {
+          // Get all speed test attempts ever
+          const allSpeedAttempts = await prisma.quizAttempt.findMany({
+            where: {
+              userId,
+              type: "speed_test",
+              completed: true,
+            },
+            include: { answerLogs: { select: { isCorrect: true } } },
+          });
+
+          // Best Q/min from today
+          const todayBestQpm = allSpeedAttempts
+            .filter((a) => a.completedAt && a.completedAt >= todayStart && a.completedAt <= todayEnd)
+            .reduce((best, a) => {
+              const answered = a.answerLogs.length;
+              if (answered === 0) return best;
+              const qpm = answered * 2;
+              return qpm > best ? qpm : best;
+            }, 0);
+
+          // Best Q/min before today
+          const historicalBestQpm = allSpeedAttempts
+            .filter((a) => !a.completedAt || a.completedAt < todayStart)
+            .reduce((best, a) => {
+              const answered = a.answerLogs.length;
+              if (answered === 0) return best;
+              const qpm = answered * 2;
+              return qpm > best ? qpm : best;
+            }, 0);
+
+          // Beat their best if today's best > historical best
+          if (todayBestQpm > historicalBestQpm) {
+            progress = 1;
+          } else if (todayBestQpm > 0 && historicalBestQpm === 0) {
+            // First speed test ever — that counts as beating your best!
+            progress = 1;
+          }
           break;
         }
       }

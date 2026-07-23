@@ -102,12 +102,21 @@ export default function DailyChallenge() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl shadow-sm ${completed ? 'animate-wiggle' : ''}`}>
+          <div className={`w-10 h-10 rounded-lg ${
+            challenge.type === 'speed_test_beat_best'
+              ? 'bg-gradient-to-br from-red-500 to-orange-500'
+              : 'bg-gradient-to-br from-amber-400 to-orange-500'
+          } flex items-center justify-center text-xl shadow-sm ${completed ? 'animate-wiggle' : ''}`}>
             {challenge.icon}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-[var(--foreground)]">{challenge.title}</p>
             <p className="text-xs text-[var(--muted)]">{challenge.description}</p>
+            {challenge.type === 'speed_test_beat_best' && (
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-[10px] font-medium text-red-500">⚡ Speed Test</span>
+              </div>
+            )}
           </div>
         </div>
 

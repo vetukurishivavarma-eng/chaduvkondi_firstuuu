@@ -1,7 +1,0 @@
-Fix len() built-in in playground simulation to return actual evaluated length
-
-- Replaced raw string length (String(fargs.length)) with computePythonLen()
-- Handles: list/tuple/dict literals, string literals, variables, range(N)
-- Uses splitArgs() for proper comma counting with nested depth
-- Also improved abs() to properly evaluate the expression
-- Fixed /s regex flag → [\s\S] pattern for TS compatibility

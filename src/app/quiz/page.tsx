@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,10 @@ import {
   Trophy,
   Target,
   ExternalLink,
+  Timer,
+  TimerReset,
+  Gauge,
+  Flame,
 } from "lucide-react";
 
 interface Question {
@@ -85,6 +89,16 @@ function QuizContent() {
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState("");
   const [startTime, setStartTime] = useState<number>(0);
+  const [newPersonalBest, setNewPersonalBest] = useState<{
+    qpm: number;
+    previousBest: number;
+    improvementPercent: number;
+  } | null>(null);
+
+  const SPEED_TEST_DURATION = 30;
+  const [timeLeft, setTimeLeft] = useState(SPEED_TEST_DURATION);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handleTimeUpRef = useRef<() => Promise<void>>(async () => {});
 
   const questionCount = searchParams.get("count")
     ? parseInt(searchParams.get("count")!)
@@ -95,6 +109,37 @@ function QuizContent() {
       setStartTime(Date.now());
     }
   }, [phase, startTime]);
+
+  // Speed test countdown timer: pure decrement, no side effects in updater
+  useEffect(() => {
+    if (phase === "active" && quiz?.type === "speed_test") {
+      setTimeLeft(SPEED_TEST_DURATION);
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [phase, quiz?.type]);
+
+  // Watch for timer expiry: separates side effects from state updater, avoids stale closures
+  useEffect(() => {
+    if (timeLeft === 0 && phase === "active" && quiz?.type === "speed_test") {
+      handleTimeUpRef.current();
+    }
+  }, [timeLeft]);
+
+  // Keep the ref updated with latest selectedChoice/quiz
+  async function handleSpeedTestTimeUp() {
+    // Submit current answer without auto-advancing, then complete
+    if (selectedChoice && quiz) {
+      await submitAnswer(true);
+    }
+    await completeQuiz();
+  }
+
+  handleTimeUpRef.current = handleSpeedTestTimeUp;
 
   // Fetch available tracks
   useEffect(() => {
@@ -125,10 +170,9 @@ function QuizContent() {
     try {
       const res = await fetch("/api/quiz/start", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        headers: { "Content-Type": "application/json" },          body: JSON.stringify({
           type: quizType,
-          count: questionCount,
+          count: quizType === "speed_test" ? 20 : questionCount,
           trackId: selectedTrackId,
         }),
       });
@@ -147,6 +191,9 @@ function QuizContent() {
       setSelectedChoice(null);
       setShowFeedback(false);
       setStartTime(Date.now());
+      if (quizType === "speed_test") {
+        setTimeLeft(SPEED_TEST_DURATION);
+      }
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -154,13 +201,14 @@ function QuizContent() {
     }
   }
 
-  async function submitAnswer() {
+  async function submitAnswer(skipAdvance = false) {
     if (!selectedChoice || !quiz) return;
 
     const question = quiz.questions[currentQuestion];
     const timeOnQuestion = Math.floor((Date.now() - startTime) / 1000);
+    const isSpeedTest = quiz.type === "speed_test";
 
-    setShowFeedback(true);
+    if (!isSpeedTest) setShowFeedback(true);
 
     try {
       const res = await fetch(`/api/quiz/${quiz.quizId}/answer`, {
@@ -185,7 +233,19 @@ function QuizContent() {
           },
         ]);
 
-        // 🎉 No avatar needed — mood reaction says it all!
+        // Speed test: auto-advance to next question immediately (unless skipAdvance)
+        if (isSpeedTest && !skipAdvance) {
+          if (currentQuestion < quiz.questions.length - 1) {
+            setTimeout(() => {
+              setCurrentQuestion((prev) => prev + 1);
+              setSelectedChoice(null);
+              setShowFeedback(false);
+              setStartTime(Date.now());
+            }, 150);
+          } else {
+            setTimeout(() => completeQuiz(), 300);
+          }
+        }
       }
     } catch {
       setAnswers((prev) => [
@@ -204,6 +264,14 @@ function QuizContent() {
           },
         },
       ]);
+      // Even on error, advance for speed test (unless skipAdvance)
+      if (isSpeedTest && !skipAdvance && currentQuestion < quiz.questions.length - 1) {
+        setTimeout(() => {
+          setCurrentQuestion((prev) => prev + 1);
+          setSelectedChoice(null);
+          setStartTime(Date.now());
+        }, 150);
+      }
     }
   }
 
@@ -224,10 +292,53 @@ function QuizContent() {
     if (!quiz) return;
     setCompleting(true);
 
+    // For speed tests, fetch previous best BEFORE completing (before the DB is updated)
+    const isSpeedTest = quiz.type === "speed_test";
+    let previousBestQpm: number | null = null;
+    if (isSpeedTest) {
+      try {
+        const pbRes = await fetch("/api/leaderboard/speed-test");
+        const pbData = await pbRes.json();
+        if (pbData.success) {
+          const myEntry = pbData.data.leaderboard.find(
+            (e: any) => e.isCurrentUser
+          );
+          if (myEntry) {
+            previousBestQpm = myEntry.bestQpm;
+          }
+        }
+      } catch {
+        // Silently fail — personal best is not critical
+      }
+    }
+
     try {
       await fetch(`/api/quiz/${quiz.quizId}`, {
         method: "PATCH",
       });
+
+      // Check if we set a new personal best
+      if (isSpeedTest) {
+        const totalAnswered = answers.length;
+        if (totalAnswered > 0) {
+          const currentQpm = totalAnswered * 2;
+          // It's a new personal best: first ever, or current > previous best
+          if (previousBestQpm === null || currentQpm > previousBestQpm) {
+            const improvementPercent =
+              previousBestQpm && previousBestQpm > 0
+                ? Math.round(
+                    ((currentQpm - previousBestQpm) / previousBestQpm) * 100
+                  )
+                : 100;
+            setNewPersonalBest({
+              qpm: currentQpm,
+              previousBest: previousBestQpm ?? 0,
+              improvementPercent,
+            });
+          }
+        }
+      }
+
       setPhase("results");
     } catch {
       setPhase("results");
@@ -281,7 +392,7 @@ function QuizContent() {
           </div>
         )}
 
-        <div className="stagger-4 animate-fade-in-up grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="stagger-4 animate-fade-in-up grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card
             className="card-bounce glass cursor-pointer"
             onClick={() => !loading && startQuiz("practice")}
@@ -341,6 +452,27 @@ function QuizContent() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Speed Test Card */}
+          <Card
+            className="card-bounce glass cursor-pointer group"
+            onClick={() => !loading && startQuiz("speed_test")}
+          >
+            <CardContent className="p-6 space-y-4">
+              <div className="p-2.5 w-fit rounded-xl bg-gradient-to-br from-red-500 to-orange-500 shadow-lg group-hover:shadow-red-500/25 transition-shadow">
+                <Timer className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-[var(--foreground)]">Speed Test ⚡</h3>
+                <p className="text-sm text-[var(--muted)] mt-1">
+                  Answer as many questions as you can in 30 seconds! Rapid-fire challenge.
+                </p>
+              </div>
+              <Button className="w-full" variant="outline" disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go Fast!"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -348,26 +480,39 @@ function QuizContent() {
 
   if (phase === "results" && quiz) {
     const correctCount = answers.filter((a) => a.isCorrect).length;
+    const totalAnswered = answers.length;
     const score =
-      quiz.questions.length > 0
-        ? Math.round((correctCount / quiz.questions.length) * 100)
+      totalAnswered > 0
+        ? Math.round((correctCount / totalAnswered) * 100)
         : 0;
+    const isSpeedTest = quiz.type === "speed_test";
+    const questionsPerMin = isSpeedTest && totalAnswered > 0
+      ? ((totalAnswered / SPEED_TEST_DURATION) * 60).toFixed(1)
+      : null;
 
     return (
       <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-        <Card className="animate-scale-in text-center glass overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
+        <Card className={`animate-scale-in text-center glass overflow-hidden ${isSpeedTest ? "border-red-500/20" : ""}`}>
+          <div className={`h-1.5 ${
+            isSpeedTest
+              ? "bg-gradient-to-r from-red-500 via-orange-500 to-amber-500"
+              : "bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500"
+          }`} />
           <CardContent className="p-8 space-y-4">
             <div
               className={`p-3 w-fit mx-auto rounded-full animate-scale-in ${
-                score >= 70
+                isSpeedTest
+                  ? "bg-red-100 dark:bg-red-900/50"
+                  : score >= 70
                   ? "bg-emerald-100 dark:bg-emerald-900/50"
                   : score >= 40
                   ? "bg-amber-100 dark:bg-amber-900/50"
                   : "bg-red-100 dark:bg-red-900/50"
               }`}
             >
-              {score >= 70 ? (
+              {isSpeedTest ? (
+                <Gauge className="w-8 h-8 text-red-600 dark:text-red-400" />
+              ) : score >= 70 ? (
                 <Trophy className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
               ) : score >= 40 ? (
                 <Target className="w-8 h-8 text-amber-600 dark:text-amber-400" />
@@ -375,30 +520,97 @@ function QuizContent() {
                 <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
               )}
             </div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)]">Quiz Complete!</h2>
-            <div className="text-5xl font-bold text-gradient">
-              {score}%
-            </div>
-            <p className="text-[var(--muted)]">
-              {correctCount} of {quiz.questions.length} correct
-            </p>
+            <h2 className="text-2xl font-bold text-[var(--foreground)]">
+              {isSpeedTest ? "Speed Test Complete! ⚡" : "Quiz Complete!"}
+            </h2>
+
+            {/* Speed Test Metrics */}
+            {isSpeedTest ? (
+              <>
+                <div className="grid grid-cols-3 gap-3 my-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20">
+                    <p className="text-2xl font-bold text-gradient">{totalAnswered}</p>
+                    <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">Answered</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
+                    <p className="text-2xl font-bold text-emerald-500">{correctCount}</p>
+                    <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">Correct</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                    <p className="text-2xl font-bold text-amber-500">{questionsPerMin}</p>
+                    <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">Q/min</p>
+                  </div>
+                </div>
+
+                {/* Personal Best Celebration */}
+                {newPersonalBest && (
+                  <div className="animate-scale-in p-4 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-2 border-amber-400/40 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
+                        <Trophy className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-lg text-[var(--foreground)]">
+                          🎉 New Personal Best!
+                        </p>
+                        <p className="text-sm text-[var(--muted)]">
+                          {newPersonalBest.qpm} Q/min — that's your fastest speed test ever!
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 justify-center">
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <span className="text-[var(--muted)]">Previous:</span>
+                        <span className="font-semibold text-[var(--foreground)]">{newPersonalBest.previousBest} Q/min</span>
+                      </div>
+                      <span className="text-[var(--muted)]">→</span>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <span className="text-[var(--muted)]">Now:</span>
+                        <span className="font-semibold text-amber-500">{newPersonalBest.qpm} Q/min</span>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] ml-2 bg-amber-500/20 text-amber-600 border-amber-400/40">
+                        +{newPersonalBest.improvementPercent}%
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-5xl font-bold text-gradient">{score}%</div>
+                <p className="text-[var(--muted)]">{correctCount} of {totalAnswered} correct</p>
+              </>
+            )}
             <Progress value={score} className="h-3 max-w-xs mx-auto" />
           </CardContent>
         </Card>
 
         <Card className="animate-slide-up glass">
           <CardHeader>
-            <CardTitle className="text-[var(--foreground)]">Question Review</CardTitle>
+            <CardTitle className="text-[var(--foreground)]">
+              {isSpeedTest ? "Answer Summary" : "Question Review"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {quiz.questions.map((q, i) => {
+            {quiz.questions.slice(0, Math.max(totalAnswered, 1)).map((q, i) => {
               const answer = answers.find((a) => a.questionId === q.id);
-              return (                  <div
-                    key={q.id}
-                    className="p-4 rounded-xl glass space-y-3"
-                  >
+              if (!answer) {
+                return (
+                  <div key={q.id} className="p-4 rounded-xl glass space-y-3 opacity-50">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-[var(--muted)] mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-sm">{q.text}</p>
+                        <p className="text-xs text-[var(--muted)] mt-1">Not answered</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={q.id} className="p-4 rounded-xl glass space-y-3">
                   <div className="flex items-start gap-3">
-                    {answer?.isCorrect ? (
+                    {answer.isCorrect ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
@@ -411,7 +623,7 @@ function QuizContent() {
                     </div>
                   </div>
 
-                  {answer?.result.explanation && (
+                  {answer.result.explanation && (
                     <div className="ml-8 p-3 glass rounded-lg text-sm">
                       <p className="font-medium text-xs uppercase tracking-wider text-[var(--muted)] mb-1">
                         Explanation
@@ -426,8 +638,8 @@ function QuizContent() {
                     </div>
                   )}
 
-                  {!answer?.isCorrect &&
-                    answer?.result.remediation &&
+                  {!answer.isCorrect &&
+                    answer.result.remediation &&
                     answer.result.remediation.length > 0 && (
                       <div className="ml-8 space-y-2">
                         <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -462,7 +674,7 @@ function QuizContent() {
             variant="outline"
             className="flex-1"
           >
-            Back to Quiz Modes
+            {isSpeedTest ? "🔄 Try Again" : "Back to Quiz Modes"}
           </Button>
           <Button onClick={() => router.push("/dashboard")} className="flex-1">
             Go to Dashboard
@@ -478,9 +690,48 @@ function QuizContent() {
   const isLastQuestion = currentQuestion === quiz.questions.length - 1;
   const answer = answers.find((a) => a.questionId === question.id);
   const progress = ((currentQuestion + 1) / quiz.questions.length) * 100;
+  const isSpeedTest = quiz.type === "speed_test";
+  const timerPercent = (timeLeft / SPEED_TEST_DURATION) * 100;
+  const timerUrgent = timeLeft <= 10;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+      {/* Speed Test Timer */}
+      {isSpeedTest && (
+        <div className="stagger-1 animate-fade-in-down">
+          <div className={`flex items-center justify-between mb-1.5 ${
+            timerUrgent ? "animate-pulse" : ""
+          }`}>
+            <div className="flex items-center gap-2">
+              <Flame className={`w-4 h-4 ${timerUrgent ? "text-red-500" : "text-orange-500"}`} />
+              <span className={`text-sm font-bold ${
+                timerUrgent ? "text-red-500" : "text-orange-500"
+              }`}>
+                Speed Test
+              </span>
+            </div>
+            <div className={`flex items-center gap-1.5 text-lg font-mono font-bold ${
+              timerUrgent
+                ? "text-red-500 animate-pulse"
+                : "text-[var(--foreground)]"
+            }`}>
+              <Timer className={`w-4 h-4 ${timerUrgent ? "" : "text-orange-500"}`} />
+              <span>{timeLeft}s</span>
+            </div>
+          </div>
+          <div className="relative h-3 rounded-full bg-[var(--soft)] overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                timerUrgent
+                  ? "bg-gradient-to-r from-red-500 to-orange-500"
+                  : "bg-gradient-to-r from-emerald-400 via-emerald-500 to-orange-400"
+              }`}
+              style={{ width: `${timerPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Progress Header */}
       <div className="flex items-center gap-4">
         <button
@@ -492,17 +743,25 @@ function QuizContent() {
         <div className="flex-1">
           <div className="flex items-center justify-between text-sm mb-1.5">
             <span className="font-medium text-[var(--foreground)]">
-              Question {currentQuestion + 1} of {quiz.questions.length}
+              {isSpeedTest
+                ? `Q${currentQuestion + 1}`
+                : `Question ${currentQuestion + 1} of ${quiz.questions.length}`
+              }
             </span>
-            <span className="text-[var(--muted)]">{Math.round(progress)}%</span>
+            {!isSpeedTest && <span className="text-[var(--muted)]">{Math.round(progress)}%</span>}
+            {isSpeedTest && (
+              <span className="text-xs text-[var(--muted)]">
+                {answers.length} answered • {answers.filter((a) => a.isCorrect).length} correct
+              </span>
+            )}
           </div>
-          <Progress value={progress} className="h-2" />
+          {!isSpeedTest && <Progress value={progress} className="h-2" />}
         </div>
       </div>
 
       {/* Quiz Type Badge */}
-      <Badge variant="secondary" className="capitalize w-fit animate-fade-in-down">
-        {quiz.type.replace("_", " ")}
+      <Badge variant={isSpeedTest ? "destructive" : "secondary"} className="capitalize w-fit animate-fade-in-down">
+        {isSpeedTest ? "⚡ Speed Test" : quiz.type.replace("_", " ")}
       </Badge>
 
       {/* Question Card */}
@@ -666,9 +925,29 @@ function QuizContent() {
 
       {/* Navigation Buttons */}
       <div className="flex gap-3 animate-fade-in-up">
-        {!showFeedback ? (
+        {isSpeedTest ? (
+          <>
+            <Button
+              onClick={() => submitAnswer()}
+              disabled={!selectedChoice || completing}
+              className="flex-1 h-12 text-base gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 border-0"
+            >
+              {completing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  {selectedChoice ? "Go! →" : "Select an answer..."}
+                </>
+              )}
+            </Button>
+            <span className="text-[10px] text-[var(--muted)] self-center">
+              Auto-advances after answer
+            </span>
+          </>
+        ) : !showFeedback ? (
           <Button
-            onClick={submitAnswer}
+            onClick={() => submitAnswer()}
             disabled={!selectedChoice}
             className="flex-1 h-12 text-base gap-2"
           >

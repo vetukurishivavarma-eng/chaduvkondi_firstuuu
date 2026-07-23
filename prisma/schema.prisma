@@ -23,6 +23,7 @@ enum QuizType {
   practice
   spaced_repetition
   code_challenge
+  speed_test
 }
 
 enum UserMood {
@@ -81,6 +82,7 @@ model User {
   seasonScores          UserSeasonScore[]
   battlesInitiated     Battle[]   @relation("challenger")
   battlesReceived      Battle[]   @relation("opponent")
+  battleAnswers        BattleAnswer[]
 }
 
 model Track {
@@ -143,6 +145,7 @@ model Question {
   concept        Concept       @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   choices        Choice[]
   answerLogs     AnswerLog[]
+  battleQuestions BattleQuestion[]
 }
 
 model Choice {
@@ -374,19 +377,59 @@ model Battle {
   challengerId    String
   opponentId      String
   trackId         String
-  status          String   @default("pending") // pending, accepted, completed, declined
-  challengerScore Float?
-  opponentScore   Float?
+  status          String   @default("pending") // pending, ready, active, completed, declined
+  challengerScore Float    @default(0)
+  opponentScore   Float    @default(0)
+  currentQuestion Int      @default(0)
+  readyChallenger Boolean  @default(false)
+  readyOpponent   Boolean  @default(false)
+  questionCount   Int      @default(10)
+  isAi            Boolean  @default(false)
+  aiDifficulty    String   @default("easy") // easy, medium, hard
+  aiCeoName       String   @default("") // CEO persona name
   startedAt       DateTime?
   completedAt     DateTime?
   createdAt       DateTime @default(now())
 
-  challenger   User  @relation("challenger", fields: [challengerId], references: [id], onDelete: Cascade)
-  opponent     User  @relation("opponent", fields: [opponentId], references: [id], onDelete: Cascade)
-  track        Track @relation(fields: [trackId], references: [id])
+  challenger   User            @relation("challenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  opponent     User            @relation("opponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  track        Track           @relation(fields: [trackId], references: [id])
+  questions    BattleQuestion[]
+  answers      BattleAnswer[]
 
   @@index([challengerId])
   @@index([opponentId])
+}
+
+model BattleQuestion {
+  id         String   @id @default(cuid())
+  battleId   String
+  questionId String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  battle   Battle         @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  question Question       @relation(fields: [questionId], references: [id])
+  answers  BattleAnswer[]
+
+  @@unique([battleId, questionId])
+}
+
+model BattleAnswer {
+  id         String   @id @default(cuid())
+  battleId   String
+  battleQuestionId String
+  userId     String
+  choiceId   String
+  isCorrect  Boolean
+  points     Int      @default(0)
+  answeredAt DateTime @default(now())
+
+  battle        Battle         @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleQuestion BattleQuestion @relation(fields: [battleQuestionId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([battleQuestionId, userId])
 }
 
 model UserSeasonScore {

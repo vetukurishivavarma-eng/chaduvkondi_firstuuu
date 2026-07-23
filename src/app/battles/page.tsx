@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,17 +46,27 @@ interface Opponent {
 }
 
 export default function BattlesPage() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
+  const [tracks, setTracks] = useState<Array<{ id: string; name: string; icon: string }>>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState<string>("");
+  const [challenging, setChallenging] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"battles" | "challenge">("battles");
+  const [activeTab, setActiveTab] = useState<"battles" | "challenge" | "ai">("battles");
 
   useEffect(() => {
-    fetch("/api/battles")
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) setData(res.data);
-      })
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/battles").then((r) => r.json()),
+      fetch("/api/dashboard").then((r) => r.json()),
+    ]).then(([battleRes, dashRes]) => {
+      if (battleRes.success) setData(battleRes.data);
+      if (dashRes.success && dashRes.data.allTracks) {
+        setTracks(dashRes.data.allTracks);
+        if (!selectedTrackId && dashRes.data.allTracks.length > 0) {
+          setSelectedTrackId(dashRes.data.allTracks[0].id);
+        }
+      }
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -98,23 +109,32 @@ export default function BattlesPage() {
           <p className="text-[var(--muted)] mt-1">Challenge other learners to a quiz duel!</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setActiveTab(activeTab === "battles" ? "challenge" : "battles")}
-            size="sm"
-            className="gap-1.5"
-          >
-            {activeTab === "battles" ? (
-              <><Send className="w-3.5 h-3.5" /> Challenge Someone</>
-            ) : (
-              <><Swords className="w-3.5 h-3.5" /> My Battles</>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setActiveTab(activeTab === "battles" ? "challenge" : "battles")}
+              size="sm"
+              className="gap-1.5"
+            >
+              {activeTab === "battles" ? (
+                <><Send className="w-3.5 h-3.5" /> Challenge</>
+              ) : (
+                <><Swords className="w-3.5 h-3.5" /> My Battles</>
+              )}
+            </Button>
+            <Button
+              onClick={() => setActiveTab("ai")}
+              size="sm"
+              variant={activeTab === "ai" ? "default" : "outline"}
+              className="gap-1.5"
+            >
+              <Zap className="w-3.5 h-3.5" /> vs AI
+            </Button>
+          </div>
         </div>
       </div>
 
       {activeTab === "battles" ? (
         <>
-          {/* Battle Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 stagger-2 animate-fade-in-up">
             <Card className="glass card-lift">
               <CardHeader className="pb-1.5">
@@ -124,41 +144,26 @@ export default function BattlesPage() {
                 <CardTitle className="text-2xl text-[var(--foreground)]">{battles.length}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-[var(--muted)]">
-                  {battles.filter(b => b.status === "completed").length} completed
-                </p>
+                <p className="text-xs text-[var(--muted)]">{battles.filter(b => b.status === "completed").length} completed</p>
               </CardContent>
             </Card>
-
             <Card className="glass card-lift">
               <CardHeader className="pb-1.5">
                 <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">
                   <Trophy className="w-3 h-3" /> Wins
                 </CardDescription>
                 <CardTitle className="text-2xl text-[var(--foreground)]">
-                  {battles.filter(b => {
-                    if (b.status !== "completed") return false;
-                    if (b.type === "challenge" && b.challenger_score != null && b.opponent_score != null) {
-                      return b.challenger_score > b.opponent_score;
-                    }
-                    if (b.type === "invite" && b.challenger_score != null && b.opponent_score != null) {
-                      return b.opponent_score > b.challenger_score;
-                    }
-                    return false;
-                  }).length}
+                  {battles.filter(b => b.status === "completed" && ((b.type === "challenge" && b.challenger_score != null && b.opponent_score != null && b.challenger_score > b.opponent_score) || (b.type === "invite" && b.challenger_score != null && b.opponent_score != null && b.opponent_score > b.challenger_score))).length}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-[var(--muted)]">
-                  {battles.filter(b => b.status === "completed" && b.challenger_score != null && b.opponent_score != null && b.challenger_score === b.opponent_score).length} draws
-                </p>
+                <p className="text-xs text-[var(--muted)]">{battles.filter(b => b.status === "completed" && b.challenger_score != null && b.opponent_score != null && b.challenger_score === b.opponent_score).length} draws</p>
               </CardContent>
             </Card>
-
             <Card className="glass card-lift">
               <CardHeader className="pb-1.5">
                 <CardDescription className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider">
-                  <Users className="w-3 h-3" /> Available Players
+                  <Users className="w-3 h-3" /> Available
                 </CardDescription>
                 <CardTitle className="text-2xl text-[var(--foreground)]">{data?.opponents?.length || 0}</CardTitle>
               </CardHeader>
@@ -168,12 +173,10 @@ export default function BattlesPage() {
             </Card>
           </div>
 
-          {/* Battle List */}
           <Card className="glass stagger-3 animate-fade-in-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
-                <Swords className="w-4 h-4 text-[var(--primary)]" />
-                Your Battles
+                <Swords className="w-4 h-4 text-[var(--primary)]" /> Your Battles
               </CardTitle>
               <CardDescription>Past and pending quiz duels</CardDescription>
             </CardHeader>
@@ -181,63 +184,32 @@ export default function BattlesPage() {
               {battles.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-10 text-center">
                   <Swords className="w-12 h-12 text-[var(--muted)]/30" />
-                  <div>
-                    <p className="text-sm font-medium text-[var(--foreground)]">No battles yet</p>
-                    <p className="text-xs text-[var(--muted)] mt-1">Challenge someone to your first quiz duel!</p>
-                  </div>
-                  <Button size="sm" onClick={() => setActiveTab("challenge")} className="gap-1.5 mt-1">
+                  <p className="text-sm font-medium text-[var(--foreground)]">No battles yet</p>
+                  <Button size="sm" onClick={() => setActiveTab("challenge")} className="gap-1.5">
                     <Zap className="w-3.5 h-3.5" /> Find Opponent
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {battles.map((battle) => {
-                    const isWin = battle.type === "challenge"
-                      ? (battle.challenger_score || 0) > (battle.opponent_score || 0)
-                      : (battle.opponent_score || 0) > (battle.challenger_score || 0);
-                    const isDraw = battle.challenger_score === battle.opponent_score;
-                    const otherName = battle.type === "challenge" ? battle.opponent_name : battle.opponent_name;
-
+                  {battles.map((b) => {
+                    const isWin = b.type === "challenge" ? (b.challenger_score || 0) > (b.opponent_score || 0) : (b.opponent_score || 0) > (b.challenger_score || 0);
+                    const isDraw = b.challenger_score === b.opponent_score;
                     return (
-                      <div key={battle.id} className="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] card-lift">
+                      <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] card-lift">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                            battle.status === "completed" ? (isWin ? "bg-emerald-500/20" : "bg-red-500/20") :
-                            battle.status === "pending" ? "bg-amber-500/20" : "bg-[var(--soft)]"
-                          }`}>
-                            {battle.status === "completed" ? (
-                              isWin ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
-                              isDraw ? <Zap className="w-4 h-4 text-amber-500" /> :
-                              <XCircle className="w-4 h-4 text-red-500" />
-                            ) : battle.status === "pending" ? (
-                              <Clock className="w-4 h-4 text-amber-500" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-[var(--muted)]" />
-                            )}
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${b.status === "completed" ? (isWin ? "bg-emerald-500/20" : "bg-red-500/20") : b.status === "pending" ? "bg-amber-500/20" : "bg-[var(--soft)]"}`}>
+                            {b.status === "completed" ? (isWin ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : isDraw ? <Zap className="w-4 h-4 text-amber-500" /> : <XCircle className="w-4 h-4 text-red-500" />) : b.status === "pending" ? <Clock className="w-4 h-4 text-amber-500" /> : <XCircle className="w-4 h-4 text-[var(--muted)]" />}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-medium truncate text-[var(--foreground)]">
-                                vs {otherName}
-                              </p>
-                              <Badge variant={battle.status === "completed" ? "secondary" : battle.status === "pending" ? "warning" : "destructive"} className="text-[10px] capitalize">
-                                {battle.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-[var(--muted)]">
-                              {battle.track_icon} {battle.track_name} • {new Date(battle.created_at).toLocaleDateString()}
-                            </p>
+                            <p className="text-sm font-medium truncate text-[var(--foreground)]">vs {b.type === "challenge" ? b.opponent_name : b.opponent_name}</p>
+                            <p className="text-xs text-[var(--muted)]">{b.track_icon} {b.track_name} • {new Date(b.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        {battle.status === "completed" && battle.challenger_score != null && battle.opponent_score != null && (
+                        {b.status === "completed" && b.challenger_score != null && b.opponent_score != null && (
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className={`text-sm font-bold ${isWin ? "text-emerald-500" : "text-red-500"}`}>
-                              {battle.type === "challenge" ? battle.challenger_score : battle.opponent_score}%
-                            </span>
+                            <span className={`text-sm font-bold ${isWin ? "text-emerald-500" : "text-red-500"}`}>{b.type === "challenge" ? b.challenger_score : b.opponent_score}%</span>
                             <span className="text-xs text-[var(--muted)]">vs</span>
-                            <span className="text-sm font-bold text-[var(--muted)]">
-                              {battle.type === "challenge" ? battle.opponent_score : battle.challenger_score}%
-                            </span>
+                            <span className="text-sm font-bold text-[var(--muted)]">{b.type === "challenge" ? b.opponent_score : b.challenger_score}%</span>
                           </div>
                         )}
                       </div>
@@ -248,14 +220,24 @@ export default function BattlesPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
+      ) : activeTab === "challenge" ? (
         <>
-          {/* Opponents List */}
+          {tracks.length > 0 && (
+            <div className="stagger-2 animate-fade-in-up space-y-2">
+              <p className="text-sm font-medium text-[var(--muted)]">Select Track for Battle</p>
+              <div className="flex flex-wrap gap-2">
+                {tracks.map((track) => (
+                  <button key={track.id} onClick={() => setSelectedTrackId(track.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTrackId === track.id ? "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30" : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--primary)]/30"}`}
+                  >{track.icon} {track.name}</button>
+                ))}
+              </div>
+            </div>
+          )}
           <Card className="glass stagger-2 animate-fade-in-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
-                <Users className="w-4 h-4 text-[var(--primary)]" />
-                Available Opponents
+                <Users className="w-4 h-4 text-[var(--primary)]" /> Available Opponents
               </CardTitle>
               <CardDescription>Select someone to challenge to a quiz battle</CardDescription>
             </CardHeader>
@@ -263,10 +245,7 @@ export default function BattlesPage() {
               {data?.opponents?.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-10 text-center">
                   <Users className="w-12 h-12 text-[var(--muted)]/30" />
-                  <div>
-                    <p className="text-sm font-medium text-[var(--foreground)]">No opponents available</p>
-                    <p className="text-xs text-[var(--muted)] mt-1">Invite friends to join the platform!</p>
-                  </div>
+                  <p className="text-sm font-medium text-[var(--foreground)]">No opponents available</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -275,9 +254,7 @@ export default function BattlesPage() {
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <Avatar className="h-9 w-9">
                           {opponent.avatarUrl && <AvatarImage src={opponent.avatarUrl} alt={opponent.name} />}
-                          <AvatarFallback className="text-xs bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] text-[var(--background)]">
-                            {opponent.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                          </AvatarFallback>
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] text-[var(--background)]">{opponent.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate text-[var(--foreground)]">{opponent.name}</p>
@@ -287,8 +264,12 @@ export default function BattlesPage() {
                           </div>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline" className="shrink-0 gap-1">
-                        <Swords className="w-3 h-3" /> Challenge
+                      <Button size="sm" variant="outline" className="shrink-0 gap-1" disabled={challenging || !selectedTrackId} onClick={async () => {
+                        if (!selectedTrackId) return; setChallenging(true);
+                        try { const res = await fetch("/api/battles/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ opponentId: opponent.id, trackId: selectedTrackId }) }); const d = await res.json(); if (d.success) router.push(`/battles/${d.data.id}`); } catch {}
+                        setChallenging(false);
+                      }}>
+                        {challenging ? <Loader2 className="w-3 h-3 animate-spin" /> : <Swords className="w-3 h-3" />} Challenge
                       </Button>
                     </div>
                   ))}
@@ -296,12 +277,49 @@ export default function BattlesPage() {
               )}
             </CardContent>
           </Card>
-
-          <div className="text-center">
-            <p className="text-sm text-[var(--muted)]">
-              Battles use random questions from your selected track. Highest score wins! 🏆
-            </p>
-          </div>
+        </>
+      ) : (
+        <>
+          {tracks.length > 0 && (
+            <div className="stagger-2 animate-fade-in-up space-y-2">
+              <p className="text-sm font-medium text-[var(--muted)]">Select Track for AI Battle</p>
+              <div className="flex flex-wrap gap-2">
+                {tracks.map((track) => (
+                  <button key={track.id} onClick={() => setSelectedTrackId(track.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedTrackId === track.id ? "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30" : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--primary)]/30"}`}
+                  >{track.icon} {track.name}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          <Card className="glass stagger-2 animate-fade-in-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                <Zap className="w-4 h-4 text-amber-500" /> Battle an AI Opponent
+              </CardTitle>
+              <CardDescription>Choose your difficulty and face a famous tech CEO!</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: "easy", label: "Easy", icon: "🌱", desc: "Slow, less accurate", color: "emerald" },
+                  { id: "medium", label: "Medium", icon: "⚡", desc: "Moderate speed & accuracy", color: "amber" },
+                  { id: "hard", label: "Hard", icon: "🔥", desc: "Fast & highly accurate!", color: "red" },
+                ].map((d) => (
+                  <Button key={d.id} size="lg" disabled={!selectedTrackId || challenging} onClick={async () => {
+                    if (!selectedTrackId) return; setChallenging(true);
+                    try { const res = await fetch("/api/battles/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trackId: selectedTrackId, difficulty: d.id }) }); const data = await res.json(); if (data.success) router.push(`/battles/${data.data.id}`); } catch {}
+                    setChallenging(false);
+                  }} className={`h-auto py-4 flex-col gap-1 ${d.color === "emerald" ? "bg-gradient-to-br from-emerald-600 to-emerald-700" : d.color === "amber" ? "bg-gradient-to-br from-amber-600 to-orange-600" : "bg-gradient-to-br from-red-600 to-orange-600"}`}>
+                    <span className="text-2xl">{d.icon}</span>
+                    <span className="font-bold">{d.label}</span>
+                    <span className="text-[10px] opacity-80">{d.desc}</span>
+                  </Button>
+                ))}
+              </div>
+              {!selectedTrackId && <p className="text-xs text-amber-500 mt-2 text-center">Select a track first!</p>}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
