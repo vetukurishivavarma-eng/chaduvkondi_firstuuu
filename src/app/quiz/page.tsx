@@ -330,7 +330,7 @@ function QuizContent() {
     }
 
     try {
-      await fetch(`/api/quiz/${quiz.quizId}`, {
+      await fetch(`/api/quiz/${quiz.quizId}/answer`, {
         method: "PATCH",
       });
 
