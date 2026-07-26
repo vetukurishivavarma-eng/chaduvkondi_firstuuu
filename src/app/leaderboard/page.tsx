@@ -402,14 +402,14 @@ export default function LeaderboardPage() {
                     return (
                       <div
                         key={entry.id}
-                        className={`grid grid-cols-2 md:grid-cols-12 gap-4 items-center p-4 rounded-xl transition-all duration-200 ${
+                        className={`flex items-center gap-3 md:grid md:grid-cols-12 md:gap-4 p-3 md:p-4 rounded-xl transition-all duration-200 ${
                           entry.isCurrentUser
                             ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800"
                             : "hover:bg-[var(--soft)] border border-transparent"
                         }`}
                       >
                         {/* Rank */}
-                        <div className="flex items-center gap-2 md:col-span-1">
+                        <div className="flex items-center gap-2 md:col-span-1 shrink-0">
                           {getRankIcon(entry.rank)}
                           {entry.rank <= 3 && (
                             <span className="block md:hidden text-xs text-[var(--muted)]">#{entry.rank}</span>
@@ -417,19 +417,19 @@ export default function LeaderboardPage() {
                         </div>
 
                         {/* Name & Avatar */}
-                        <div className="flex items-center gap-3 md:col-span-4 md:ml-0">
-                          <Avatar className={`h-8 w-8 ${entry.isCurrentUser ? "ring-2 ring-emerald-400" : ""}`}>
-                            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 md:col-span-4">
+                          <Avatar className={`h-7 w-7 md:h-8 md:w-8 ${entry.isCurrentUser ? "ring-2 ring-emerald-400" : ""}`}>
+                            <AvatarFallback className="text-[10px] md:text-xs">{initials}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="text-sm font-medium text-[var(--foreground)]">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs md:text-sm font-medium text-[var(--foreground)] truncate">
                               {entry.name}
                               {entry.isCurrentUser && (
-                                <Badge variant="default" className="ml-2 text-[10px] py-0">You</Badge>
+                                <Badge variant="default" className="ml-1 md:ml-2 text-[10px] py-0">You</Badge>
                               )}
                             </p>
-                            <p className="text-xs text-[var(--muted)] md:hidden">
-                              {entry.overallScore}% • {entry.conceptsCount} concepts
+                            <p className="text-[10px] md:text-xs text-[var(--muted)] md:hidden">
+                              {entry.tier && `${entry.tier.icon} ${entry.tier.name} • `}{entry.overallScore}% • {entry.conceptsCount} concepts
                             </p>
                           </div>
                         </div>

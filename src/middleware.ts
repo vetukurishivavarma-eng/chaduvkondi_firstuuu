@@ -36,10 +36,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to dashboard if auth page and valid token
-  if (isValidToken && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+  // Auth pages (login/signup) are not auto-redirected —
+  // the login page itself handles the "already logged in" state
+  // so users can choose to sign in with a different account.
 
   return NextResponse.next();
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, LogOut, LayoutDashboard } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +16,30 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [existingSession, setExistingSession] = useState<{ name: string; email: string } | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Check if already logged in — let user choose instead of auto-redirecting
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setExistingSession({ name: data.data.name, email: data.data.email });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingSession(false));
+  }, []);
+
+  async function handleLogoutAndStay() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setExistingSession(null);
+      // Force full reload to clear cookie state
+      window.location.href = "/login";
+    } catch {}
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,82 +86,116 @@ export default function LoginPage() {
           <span className="font-heading font-semibold text-lg tracking-tight text-[var(--foreground)]">Chaduvkondi</span>
         </div>
 
-        <Card className="glass animate-scale-in">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl text-gradient">Welcome back</CardTitle>
-            <CardDescription>Sign in to continue your learning journey</CardDescription>
-          </CardHeader>
-
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="p-2.5 text-sm bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-[var(--primary)] hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    className="pr-9"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col gap-3 pt-2">
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing in...</>
-                ) : (
-                  "Sign In"
-                )}
+        {/* Already logged in banner */}
+        {checkingSession ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : existingSession ? (
+          <Card className="glass animate-scale-in overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
+            <CardHeader className="text-center pb-3">
+              <CardTitle className="text-lg">Already signed in</CardTitle>
+              <CardDescription>
+                You are logged in as <strong>{existingSession.name}</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                onClick={() => router.push('/dashboard')}
+                className="w-full gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Go to Dashboard
               </Button>
-              <p className="text-sm text-center text-[var(--muted)]">
-                Don&apos;t have an account?{" "}
-                <Link href="/signup" className="text-[var(--primary)] hover:underline font-medium">
-                  Sign up
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
+              <Button
+                onClick={handleLogoutAndStay}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign out and use different account
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="glass animate-scale-in">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl text-gradient">Welcome back</CardTitle>
+              <CardDescription>Sign in to continue your learning journey</CardDescription>
+            </CardHeader>
+
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-4">
+                {error && (
+                  <div className="p-2.5 text-sm bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] rounded-md">
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-[var(--primary)] hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                      className="pr-9"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex flex-col gap-3 pt-2">
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing in...</>
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+                <p className="text-sm text-center text-[var(--muted)]">
+                  Don&apos;t have an account?{" "}
+                  <Link href="/signup" className="text-[var(--primary)] hover:underline font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
+        )}
       </div>
     </div>
   );

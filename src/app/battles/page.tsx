@@ -161,47 +161,47 @@ export default function BattlesPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gradient">Quiz Battles</h1>
           <p className="text-[var(--muted)] mt-1">Challenge other learners to a quiz duel!</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-none">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               onClick={() => setActiveTab("battles")}
               size="sm"
               variant={activeTab === "battles" ? "default" : "outline"}
-              className="gap-1.5"
+              className="gap-1 text-xs sm:text-sm shrink-0"
             >
-              <Swords className="w-3.5 h-3.5" /> My Battles
+              <Swords className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Battles</span>
             </Button>
             <Button
               onClick={() => setActiveTab("challenge")}
               size="sm"
               variant={activeTab === "challenge" ? "default" : "outline"}
-              className="gap-1.5"
+              className="gap-1 text-xs sm:text-sm shrink-0"
             >
-              <Send className="w-3.5 h-3.5" /> Challenge
+              <Send className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Challenge</span>
             </Button>
             <Button
               onClick={() => setActiveTab("ai")}
               size="sm"
               variant={activeTab === "ai" ? "default" : "outline"}
-              className="gap-1.5"
+              className="gap-1 text-xs sm:text-sm shrink-0"
             >
-              <Zap className="w-3.5 h-3.5" /> vs AI
+              <Zap className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">vs AI</span>
             </Button>
             <Button
               onClick={() => setActiveTab("leaderboard")}
               size="sm"
               variant={activeTab === "leaderboard" ? "default" : "outline"}
-              className="gap-1.5"
+              className="gap-1 text-xs sm:text-sm shrink-0"
             >
-              <Medal className="w-3.5 h-3.5" /> Rankings
+              <Medal className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Rankings</span>
             </Button>
             <Button
               onClick={() => { setActiveTab("ceo-stats"); if (ceoStats.length === 0) fetchCeoStats(); }}
               size="sm"
               variant={activeTab === "ceo-stats" ? "default" : "outline"}
-              className="gap-1.5"
+              className="gap-1 text-xs sm:text-sm shrink-0"
             >
-              <Users className="w-3.5 h-3.5" /> CEO Stats
+              <Users className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">CEO Stats</span>
             </Button>
           </div>
         </div>

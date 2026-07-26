@@ -82,9 +82,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router, pathname]);
 
   async function handleLogout() {
-    try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
-    router.push("/login");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      // Use full page reload to ensure cookie is cleared before navigation
+      window.location.href = "/login";
+    } catch {
+      // Fallback — force reload even on error
+      window.location.href = "/login";
+    }
   }
 
   if (loading) {
