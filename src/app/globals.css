@@ -175,6 +175,15 @@ body {
 
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-wiggle { animation: wiggle 0.5s ease-in-out infinite; }
+
+/* Thinking bar for AI opponent */
+@keyframes thinking-bar {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+.animate-thinking-easy { animation: thinking-bar 7s linear forwards; }
+.animate-thinking-medium { animation: thinking-bar 4s linear forwards; }
+.animate-thinking-hard { animation: thinking-bar 1.5s linear forwards; }
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 4s ease infinite;

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { CEO_PERSONAS } from "@/lib/ai-battle";
 import {
   Swords,
   Users,
@@ -22,6 +23,10 @@ import {
   Gauge,
   User,
   Target,
+  Timer,
+  Flame,
+  AlertTriangle,
+  Lightbulb,
 } from "lucide-react";
 
 type BattlePhase = "lobby" | "active" | "results";
@@ -87,6 +92,15 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [readyCheckTrigger, setReadyCheckTrigger] = useState(0);
   const POLL_INTERVAL = 1500;
+  const QUESTION_TIME_LIMIT = 15;
+  const [questionTimer, setQuestionTimer] = useState(QUESTION_TIME_LIMIT);
+  const questionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastQuestionOrderRef = useRef<number>(-1);
+  const handleTimerExpiryRef = useRef<() => Promise<void>>(async () => {});
+  const timerExpiredRef = useRef(false);
+  const [aiThinking, setAiThinking] = useState(false);
+  const [aiAnswerRevealed, setAiAnswerRevealed] = useState(false);
+  const aiThinkingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract battle ID from params
   useEffect(() => {
@@ -151,22 +165,35 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
     }
   }, [phase, battle?.readyChallenger, battle?.readyOpponent, fetchStatus]);
 
-  // CEO persona helpers
+  // CEO persona helpers — uses dynamic data from CEO_PERSONAS
   function getCeoColor(name: string): string {
-    const colors: Record<string, string> = {
-      "Elon Musk": "#6366f1","Satya Nadella": "#00A4EF","Tim Cook": "#555555",
-      "Sundar Pichai": "#34A853","Mark Zuckerberg": "#1877F2","Jensen Huang": "#76B900",
-      "Sam Altman": "#10A37F","Jeff Bezos": "#FF9900","Brian Chesky": "#FF5A5F","Reed Hastings": "#E50914",
-    };
-    return colors[name] || "#6366f1";
+    const ceo = CEO_PERSONAS.find((c) => c.name === name);
+    return ceo?.color || "#6366f1";
   }
   function getCeoEmoji(name: string): string {
-    const emojis: Record<string, string> = {
-      "Elon Musk": "🚀","Satya Nadella": "💻","Tim Cook": "🍎",
-      "Sundar Pichai": "🔍","Mark Zuckerberg": "🌐","Jensen Huang": "🖥️",
-      "Sam Altman": "🤖","Jeff Bezos": "📦","Brian Chesky": "🏠","Reed Hastings": "🎬",
-    };
-    return emojis[name] || "🤖";
+    const ceo = CEO_PERSONAS.find((c) => c.name === name);
+    return ceo?.emoji || "🤖";
+  }
+  function getCeoCatchphrase(name: string): string {
+    const ceo = CEO_PERSONAS.find((c) => c.name === name);
+    return ceo?.catchphrase || "";
+  }
+
+  // Calculate AI thinking delay based on difficulty
+  function getAiThinkingDelay(difficulty: string): number {
+    // Sample from CEO_PERSONAS config ranges for the given difficulty
+    const rar = CEO_PERSONAS[0]?.difficulty[difficulty];
+    if (rar) {
+      const { minDelay, maxDelay } = rar;
+      return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    }
+    // Fallbacks
+    switch (difficulty) {
+      case "easy": return Math.floor(Math.random() * 5000) + 4000;
+      case "medium": return Math.floor(Math.random() * 4000) + 2000;
+      case "hard": return Math.floor(Math.random() * 2000) + 600;
+      default: return 5000;
+    }
   }
 
   // Copy share link
@@ -187,9 +214,78 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
     } catch {}
   }
 
-  // Submit answer
-  async function handleAnswer() {
-    if (!selectedChoice || !battle?.currentQuestionData || answering) return;
+  // Reset question timer when question changes
+  useEffect(() => {
+    if (phase === "active" && battle?.currentQuestionData) {
+      const newOrder = battle.currentQuestionData.order;
+      if (newOrder !== lastQuestionOrderRef.current) {
+        lastQuestionOrderRef.current = newOrder;
+        setQuestionTimer(QUESTION_TIME_LIMIT);
+        timerExpiredRef.current = false;
+      }
+    }
+  }, [phase, battle?.currentQuestionData?.order, battle?.currentQuestionData?.id]);
+
+  // Question countdown timer
+  useEffect(() => {
+    if (phase === "active" && !battle?.hasAnsweredCurrent && battle?.currentQuestionData) {
+      questionTimerRef.current = setInterval(() => {
+        setQuestionTimer((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (questionTimerRef.current) clearInterval(questionTimerRef.current);
+    };
+  }, [phase, battle?.hasAnsweredCurrent, battle?.currentQuestionData?.id, battle?.currentQuestionData?.order]);
+
+  // Watch for timer expiry -> auto-submit or skip
+  useEffect(() => {
+    if (questionTimer === 0 && phase === "active" && !battle?.hasAnsweredCurrent && !timerExpiredRef.current) {
+      timerExpiredRef.current = true;
+      handleTimerExpiryRef.current();
+    }
+  }, [questionTimer]);
+
+  // Keep timer expiry handler updated with latest closures
+  async function handleTimerExpiry() {
+    if (selectedChoice && battle?.currentQuestionData) {
+      // Auto-submit the selected answer
+      await handleSubmitAnswer(selectedChoice);
+    } else if (battle?.currentQuestionData) {
+      // No answer selected — skip (auto-inflict -1 penalty in UI via empty submit)
+      await fetchStatus();
+    }
+  }
+  handleTimerExpiryRef.current = handleTimerExpiry;
+
+  // Reset AI thinking state when question changes
+  useEffect(() => {
+    if (phase === "active" && battle?.currentQuestionData) {
+      setAiThinking(false);
+      setAiAnswerRevealed(false);
+      if (aiThinkingTimeoutRef.current) {
+        clearTimeout(aiThinkingTimeoutRef.current);
+        aiThinkingTimeoutRef.current = null;
+      }
+    }
+  }, [battle?.currentQuestionData?.id]);
+
+  // Cleanup AI thinking timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (aiThinkingTimeoutRef.current) {
+        clearTimeout(aiThinkingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  async function handleSubmitAnswer(choiceId: string) {
+    if (!battle?.currentQuestionData || answering) return;
     setAnswering(true);
 
     try {
@@ -198,18 +294,37 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           battleQuestionId: battle.currentQuestionData.id,
-          choiceId: selectedChoice,
+          choiceId,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setSelectedChoice(null);
-        // Immediately fetch status to see updated state
-        await fetchStatus();
+        if (questionTimerRef.current) clearInterval(questionTimerRef.current);
+
+        if (battle?.isAi) {
+          // AI Thinking: delay showing the AI's answer based on difficulty
+          const delayMs = getAiThinkingDelay(battle.aiDifficulty || "medium");
+          setAiThinking(true);
+          setAiAnswerRevealed(false);
+          aiThinkingTimeoutRef.current = setTimeout(() => {
+            setAiThinking(false);
+            setAiAnswerRevealed(true);
+            fetchStatus();
+          }, delayMs);
+        } else {
+          await fetchStatus();
+        }
       }
     } catch {}
 
     setAnswering(false);
+  }
+
+  // Submit answer (user initiated)
+  async function handleAnswer() {
+    if (!selectedChoice || !battle?.currentQuestionData || answering) return;
+    await handleSubmitAnswer(selectedChoice);
   }
 
   if (error) {
@@ -465,6 +580,48 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
       {/* Progress */}
       <Progress value={progress} className="h-1.5 stagger-1 animate-fade-in-up" />
 
+      {/* Per-Question Timer */}
+      {!battle.hasAnsweredCurrent && (
+        <div className="stagger-1 animate-fade-in-down space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              {questionTimer <= 5 ? (
+                <Flame className={`w-3.5 h-3.5 ${questionTimer <= 3 ? "text-red-500 animate-pulse" : "text-orange-500"}`} />
+              ) : (
+                <Timer className="w-3.5 h-3.5 text-[var(--muted)]" />
+              )}
+              <span className={`text-xs font-mono font-bold ${
+                questionTimer <= 3
+                  ? "text-red-500 animate-pulse"
+                  : questionTimer <= 5
+                  ? "text-orange-500"
+                  : "text-[var(--muted)]"
+              }`}>
+                {questionTimer}s
+              </span>
+            </div>
+            {questionTimer <= 5 && (
+              <span className="text-[10px] text-orange-500 font-medium flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Time running out!
+              </span>
+            )}
+          </div>
+          <div className="relative h-2 rounded-full bg-[var(--soft)] overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                questionTimer <= 3
+                  ? "bg-gradient-to-r from-red-500 to-red-600 animate-pulse"
+                  : questionTimer <= 5
+                  ? "bg-gradient-to-r from-orange-500 to-red-500"
+                  : "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-light)]"
+              }`}
+              style={{ width: `${(questionTimer / QUESTION_TIME_LIMIT) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Question Card */}
       <Card className="glass animate-scale-in stagger-2">
         <CardContent className="p-6 space-y-6">
@@ -541,7 +698,9 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
                   <span className="text-sm font-medium text-red-500">{currentQ.myAnswer?.points} point</span>
                 </>
               )}
-              {battle.bothAnsweredCurrent ? (
+              {battle.isAi && aiThinking ? (
+                <span className="text-xs text-[var(--muted)] ml-auto">AI thinking...</span>
+              ) : battle.bothAnsweredCurrent || (battle.isAi && aiAnswerRevealed) ? (
                 <span className="text-xs text-[var(--muted)] ml-auto">Waiting for next question...</span>
               ) : (
                 <span className="text-xs text-[var(--muted)] ml-auto">Waiting for opponent...</span>
@@ -549,14 +708,53 @@ export default function BattlePage({ params }: { params: Promise<{ id: string }>
             </div>
           )}
 
-          {/* Opponent status */}
-          {!battle.hasAnsweredCurrent && currentQ.opponentAnswer && (
+          {/* AI Thinking Indicator */}
+          {battle.isAi && aiThinking && (
+            <div className="animate-scale-in p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/20 dark:to-orange-950/20">
+              <div className="flex items-center gap-4">
+                {/* Bouncing CEO emoji */}
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl animate-bounce"
+                    style={{ backgroundColor: getCeoColor(battle.opponentName) + "20" }}
+                  >
+                    {getCeoEmoji(battle.opponentName) || "🤖"}
+                  </div>
+                  {/* Thinking dots around the emoji */}
+                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 animate-ping" />
+                </div>
+
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-[var(--foreground)]">
+                    {battle.opponentName} is thinking...
+                  </p>
+                  <p className="text-xs text-[var(--muted)] mt-0.5 flex items-center gap-1">
+                    <Lightbulb className="w-3 h-3 text-amber-500 animate-pulse" />
+                    <span className="thinking-dots">
+                      {getCeoCatchphrase(battle.opponentName) || "Analyzing your answer..."}
+                    </span>
+                  </p>
+                  {/* Thinking progress bar — duration matches difficulty */}
+                  <div className="mt-2 h-1 rounded-full bg-[var(--soft)] overflow-hidden">
+                    <div className={`h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 animate-thinking-${battle.aiDifficulty || "medium"}`} />
+                  </div>
+                </div>
+
+                {/* Difficulty badge */}
+                <Badge variant="secondary" className="text-[10px] self-start">
+                  {battle.aiDifficulty === "hard" ? "🔥" : battle.aiDifficulty === "medium" ? "⚡" : "🌱"} {battle.aiDifficulty}
+                </Badge>
+              </div>
+            </div>
+          )}
+
+          {/* Opponent answered (non-AI or AI revealed) */}
+          {!battle.hasAnsweredCurrent && !aiThinking && (currentQ.opponentAnswer || (battle.isAi && aiAnswerRevealed)) && (
             <div className="text-xs text-[var(--muted)] text-center">
               Opponent has answered
             </div>
           )}
 
-          {!battle.hasAnsweredCurrent && currentQ.answerCount === 0 && (
+          {!battle.hasAnsweredCurrent && !battle.isAi && currentQ.answerCount === 0 && (
             <div className="text-xs text-[var(--muted)] text-center">
               Waiting for both players to answer...
             </div>

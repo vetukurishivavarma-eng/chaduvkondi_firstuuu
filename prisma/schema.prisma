@@ -83,6 +83,10 @@ model User {
   battlesInitiated     Battle[]   @relation("challenger")
   battlesReceived      Battle[]   @relation("opponent")
   battleAnswers        BattleAnswer[]
+  battlePoints         Int        @default(0)
+  battleWins           Int        @default(0)
+  battleLosses         Int        @default(0)
+  battleDraws          Int        @default(0)
 }
 
 model Track {

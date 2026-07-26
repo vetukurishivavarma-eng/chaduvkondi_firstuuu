@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getRandomCeo } from "@/lib/ai-battle";
+import { getRandomCeo, getCeoByName } from "@/lib/ai-battle";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { trackId, difficulty = "medium" } = await request.json();
+    const { trackId, difficulty = "medium", ceoName } = await request.json();
 
     if (!trackId) {
       return NextResponse.json({ success: false, error: "Track is required" }, { status: 400 });
@@ -20,8 +20,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Invalid difficulty" }, { status: 400 });
     }
 
-    // Pick a random CEO opponent
-    const ceo = getRandomCeo();
+    // Pick a CEO opponent (specific one if chosen, otherwise random)
+    const ceo = ceoName ? getCeoByName(ceoName) : getRandomCeo();
+    if (!ceo) {
+      return NextResponse.json({ success: false, error: "Invalid CEO name" }, { status: 400 });
+    }
 
     // Create battle with AI configuration
     const battle = await prisma.battle.create({

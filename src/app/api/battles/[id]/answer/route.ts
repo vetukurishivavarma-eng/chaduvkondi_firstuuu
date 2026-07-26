@@ -111,7 +111,7 @@ export async function POST(
       const nextQuestion = battle.currentQuestion + 1;
 
       if (nextQuestion >= totalQuestions) {
-        // Battle is complete
+        // Battle is complete — calculate final scores and award league points
         const finalAnswers = await tx.battleAnswer.findMany({ where: { battleId: id } });
         const challengerScore = finalAnswers
           .filter((a) => a.userId === battle.challengerId)
@@ -123,6 +123,48 @@ export async function POST(
           : finalAnswers
               .filter((a) => a.userId === battle.opponentId)
               .reduce((sum, a) => sum + a.points, 0);
+
+        // Award league points based on result
+        const scoreDiff = challengerScore - opponentScore;
+        if (scoreDiff > 0) {
+          // Challenger wins
+          const battlePoints = 100 + Math.min(scoreDiff * 10, 150);
+          await tx.user.update({
+            where: { id: battle.challengerId },
+            data: { battlePoints: { increment: battlePoints }, battleWins: { increment: 1 } },
+          });
+          if (!battle.isAi) {
+            await tx.user.update({
+              where: { id: battle.opponentId },
+              data: { battlePoints: { increment: 10 }, battleLosses: { increment: 1 } }, // participation points
+            });
+          }
+        } else if (scoreDiff < 0) {
+          // Opponent wins
+          const battlePoints = 100 + Math.min(Math.abs(scoreDiff) * 10, 150);
+          if (!battle.isAi) {
+            await tx.user.update({
+              where: { id: battle.opponentId },
+              data: { battlePoints: { increment: battlePoints }, battleWins: { increment: 1 } },
+            });
+          }
+          await tx.user.update({
+            where: { id: battle.challengerId },
+            data: { battlePoints: { increment: 10 }, battleLosses: { increment: 1 } },
+          });
+        } else {
+          // Draw
+          if (!battle.isAi) {
+            await tx.user.update({
+              where: { id: battle.opponentId },
+              data: { battlePoints: { increment: 20 }, battleDraws: { increment: 1 } },
+            });
+          }
+          await tx.user.update({
+            where: { id: battle.challengerId },
+            data: { battlePoints: { increment: 20 }, battleDraws: { increment: 1 } },
+          });
+        }
 
         await tx.battle.update({
           where: { id },

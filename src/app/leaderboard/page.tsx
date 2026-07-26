@@ -25,6 +25,8 @@ import {
   Flame,
   Zap,
   CheckCircle2,
+  Swords,
+  BarChart3,
 } from "lucide-react";
 
 interface LeaderboardEntry {
@@ -103,6 +105,11 @@ export default function LeaderboardPage() {
   const [speedCurrentUser, setSpeedCurrentUser] = useState<SpeedTestCurrentUser | null>(null);
   const [speedLoading, setSpeedLoading] = useState(false);
 
+  // Battle leaderboard state
+  const [battleLeaderboard, setBattleLeaderboard] = useState<any[]>([]);
+  const [battleCurrentUser, setBattleCurrentUser] = useState<any>(null);
+  const [battleLoading, setBattleLoading] = useState(false);
+
   function fetchLeaderboard(seasonId?: string | null, periodFilter?: string) {
     setLoading(true);
     let url = "/api/leaderboard?";
@@ -134,11 +141,26 @@ export default function LeaderboardPage() {
       .finally(() => setSpeedLoading(false));
   }
 
+  function fetchBattleLeaderboard() {
+    setBattleLoading(true);
+    fetch("/api/leaderboard/battles")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success) {
+          setBattleLeaderboard(res.data.leaderboard);
+          setBattleCurrentUser(res.data.currentUser);
+        }
+      })
+      .finally(() => setBattleLoading(false));
+  }
+
   useEffect(() => {
     if (activeTab === "mastery") {
       fetchLeaderboard();
-    } else {
+    } else if (activeTab === "speed") {
       fetchSpeedLeaderboard();
+    } else if (activeTab === "battles") {
+      fetchBattleLeaderboard();
     }
   }, [activeTab]);
 
@@ -167,7 +189,7 @@ export default function LeaderboardPage() {
     }
   };
 
-  if ((loading && activeTab === "mastery") || (speedLoading && activeTab === "speed")) {
+  if ((loading && activeTab === "mastery") || (speedLoading && activeTab === "speed") || (battleLoading && activeTab === "battles")) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-2 text-[var(--muted)]">
@@ -187,7 +209,9 @@ export default function LeaderboardPage() {
           <p className="text-[var(--muted)] mt-1">
             {activeTab === "mastery"
               ? "See how you stack up against other learners"
-              : "Fastest speed test champions — highest Q/min scores"}
+              : activeTab === "speed"
+              ? "Fastest speed test champions — highest Q/min scores"
+              : "Top fighters ranked by battle league points"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -262,14 +286,18 @@ export default function LeaderboardPage() {
       {/* Tab Toggle: Mastery vs Speed Test */}
       <div className="stagger-2 animate-fade-in-up">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="mastery" className="gap-2">
               <Trophy className="w-4 h-4" />
               Mastery
             </TabsTrigger>
             <TabsTrigger value="speed" className="gap-2">
               <Zap className="w-4 h-4" />
-              Speed Test ⚡
+              Speed ⚡
+            </TabsTrigger>
+            <TabsTrigger value="battles" className="gap-2">
+              <Swords className="w-4 h-4" />
+              Battles
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -441,7 +469,7 @@ export default function LeaderboardPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
+      ) : activeTab === "speed" ? (
         <>
           {/* SPEED TEST: Current User Stats */}
           {speedCurrentUser && (
@@ -697,6 +725,213 @@ export default function LeaderboardPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <>
+          {/* BATTLE: Current User Stats */}
+          {battleCurrentUser && (
+            <Card className="glass stagger-2 animate-fade-in-up overflow-hidden border-amber-500/20">
+              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500" />
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg">
+                      <Medal className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[var(--muted)]">Your Rank</p>
+                      <p className="text-2xl font-bold text-[var(--foreground)]">
+                        {battleCurrentUser.rank ? `#${battleCurrentUser.rank}` : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg">
+                      <Swords className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[var(--muted)]">League Points</p>
+                      <p className="text-2xl font-bold text-amber-500">{battleCurrentUser.battlePoints}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+                      <Trophy className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[var(--muted)]">W/L</p>
+                      <p className="text-2xl font-bold text-[var(--foreground)]">
+                        {battleCurrentUser.wins}
+                        <span className="text-sm text-[var(--muted)] font-normal">W </span>
+                        {battleCurrentUser.losses}
+                        <span className="text-sm text-[var(--muted)] font-normal">L</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg">
+                      <BarChart3 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[var(--muted)]">Win Rate</p>
+                      <p className="text-2xl font-bold text-[var(--foreground)]">
+                        {battleCurrentUser.winRate}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 text-center text-sm text-[var(--muted)]">
+                  {battleCurrentUser.totalBattles} total battle{battleCurrentUser.totalBattles !== 1 ? "s" : ""} —{" "}
+                  {battleCurrentUser.rank
+                    ? `Ranked #${battleCurrentUser.rank}`
+                    : "Complete a battle to get ranked!"}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* BATTLE: No current user data */}
+          {!battleCurrentUser && (
+            <Card className="glass stagger-2 animate-fade-in-up overflow-hidden border-amber-500/20">
+              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500" />
+              <CardContent className="p-8 text-center space-y-3">
+                <div className="p-3 w-fit mx-auto rounded-full bg-amber-100 dark:bg-amber-900/50">
+                  <Swords className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                </div>
+                <p className="text-lg font-semibold text-[var(--foreground)]">
+                  No Battle Data Yet
+                </p>
+                <p className="text-sm text-[var(--muted)] max-w-md mx-auto">
+                  Challenge someone to a quiz battle or face an AI opponent! Earn league points with every match.
+                </p>
+                <Link href="/battles">
+                  <Button className="gap-2 mt-2">
+                    <Swords className="w-4 h-4" />
+                    Go to Battles
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* BATTLE: Leaderboard Table */}
+          <Card className="glass stagger-3 animate-fade-in-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg text-[var(--foreground)]">
+                <Swords className="w-5 h-5 text-amber-500" />
+                Battle Rankings
+              </CardTitle>
+              <CardDescription>
+                Top fighters ranked by battle league points
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {battleLeaderboard.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-center">
+                  <Swords className="w-10 h-10 text-[var(--border)]" />
+                  <p className="text-[var(--muted)]">No battle rankings yet</p>
+                  <p className="text-sm text-[var(--muted)]">Complete a battle to earn league points and appear here!</p>
+                  <Link href="/battles">
+                    <Button variant="outline" size="sm" className="gap-2 mt-2">
+                      <Swords className="w-4 h-4" />
+                      Start Battling
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Table Header */}
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+                    <div className="col-span-1">Rank</div>
+                    <div className="col-span-3">Name</div>
+                    <div className="col-span-2 text-center">Points</div>
+                    <div className="col-span-2 text-center">W/L</div>
+                    <div className="col-span-2 text-center">Win Rate</div>
+                    <div className="col-span-2 text-center">Total</div>
+                  </div>
+
+                  {battleLeaderboard.slice(0, 50).map((entry: any) => (
+                    <div
+                      key={entry.userId}
+                      className={`grid grid-cols-2 md:grid-cols-12 gap-4 items-center p-4 rounded-xl transition-all duration-200 ${
+                        entry.isCurrentUser
+                          ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800"
+                          : "hover:bg-[var(--soft)] border border-transparent"
+                      }`}
+                    >
+                      {/* Rank */}
+                      <div className="flex items-center gap-2 md:col-span-1">
+                        {getRankIcon(entry.rank)}
+                        {entry.rank <= 3 && (
+                          <span className="block md:hidden text-xs text-[var(--muted)]">#{entry.rank}</span>
+                        )}
+                      </div>
+
+                      {/* Name */}
+                      <div className="flex items-center gap-3 md:col-span-3 md:ml-0">
+                        <Avatar className={`h-8 w-8 ${entry.isCurrentUser ? "ring-2 ring-amber-400" : ""}`}>
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-amber-500 to-yellow-600 text-white">
+                            {entry.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium text-[var(--foreground)]">
+                            {entry.name}
+                            {entry.isCurrentUser && (
+                              <Badge variant="default" className="ml-2 text-[10px] py-0 bg-amber-500 hover:bg-amber-600">You</Badge>
+                            )}
+                          </p>
+                          <p className="text-xs text-[var(--muted)] md:hidden">
+                            {entry.battlePoints} pts • {entry.winRate}% win rate
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Points */}
+                      <div className="hidden md:flex md:col-span-2 justify-center">
+                        <span className="text-sm font-bold text-amber-500 dark:text-amber-400">
+                          {entry.battlePoints}
+                        </span>
+                      </div>
+
+                      {/* W/L */}
+                      <div className="hidden md:flex md:col-span-2 justify-center gap-2">
+                        <span className="text-xs font-medium text-emerald-500">{entry.wins}W</span>
+                        <span className="text-xs font-medium text-red-500">{entry.losses}L</span>
+                        {entry.draws > 0 && (
+                          <span className="text-xs font-medium text-[var(--muted)]">{entry.draws}D</span>
+                        )}
+                      </div>
+
+                      {/* Win Rate */}
+                      <div className="hidden md:flex md:col-span-2 justify-center">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-16 h-1.5 rounded-full bg-[var(--soft)] overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                entry.winRate >= 60 ? "bg-emerald-500" : entry.winRate >= 40 ? "bg-amber-500" : "bg-red-500"
+                              }`}
+                              style={{ width: `${entry.winRate}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-[var(--muted)]">{entry.winRate}%</span>
+                        </div>
+                      </div>
+
+                      {/* Total */}
+                      <div className="hidden md:flex md:col-span-2 justify-center">
+                        <span className="text-xs text-[var(--muted)]">{entry.totalBattles}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

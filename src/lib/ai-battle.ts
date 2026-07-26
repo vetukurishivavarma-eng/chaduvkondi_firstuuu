@@ -134,7 +134,106 @@ export const CEO_PERSONAS: CeoPersona[] = [
       hard: { accuracy: 0.80, minDelay: 1000, maxDelay: 2500 },
     },
   },
+  {
+    name: "Larry Page",
+    title: "Co-Founder of Google",
+    emoji: "🔎",
+    color: "#4285F4",
+    catchphrase: "Always be a little bit scared.",
+    difficulty: {
+      easy: { accuracy: 0.35, minDelay: 4500, maxDelay: 8000 },
+      medium: { accuracy: 0.60, minDelay: 2800, maxDelay: 5000 },
+      hard: { accuracy: 0.82, minDelay: 1000, maxDelay: 2500 },
+    },
+  },
+  {
+    name: "Bill Gates",
+    title: "Founder of Microsoft",
+    emoji: "💡",
+    color: "#00A4EF",
+    catchphrase: "Measure what matters.",
+    difficulty: {
+      easy: { accuracy: 0.40, minDelay: 4000, maxDelay: 7500 },
+      medium: { accuracy: 0.65, minDelay: 2500, maxDelay: 4500 },
+      hard: { accuracy: 0.85, minDelay: 800, maxDelay: 2500 },
+    },
+  },
+  {
+    name: "Jack Dorsey",
+    title: "Co-Founder of Twitter & Block",
+    emoji: "🐦",
+    color: "#1DA1F2",
+    catchphrase: "Focus on the signal, not the noise.",
+    difficulty: {
+      easy: { accuracy: 0.30, minDelay: 5000, maxDelay: 9000 },
+      medium: { accuracy: 0.55, minDelay: 3000, maxDelay: 6000 },
+      hard: { accuracy: 0.75, minDelay: 1500, maxDelay: 3500 },
+    },
+  },
+  {
+    name: "Daniel Ek",
+    title: "CEO of Spotify",
+    emoji: "🎵",
+    color: "#1DB954",
+    catchphrase: "The future is audio. The future is personal.",
+    difficulty: {
+      easy: { accuracy: 0.35, minDelay: 4500, maxDelay: 8000 },
+      medium: { accuracy: 0.60, minDelay: 2500, maxDelay: 5000 },
+      hard: { accuracy: 0.78, minDelay: 1500, maxDelay: 3000 },
+    },
+  },
+  {
+    name: "Patrick Collison",
+    title: "Co-Founder of Stripe",
+    emoji: "💳",
+    color: "#635BFF",
+    catchphrase: "Move fast and write great code.",
+    difficulty: {
+      easy: { accuracy: 0.35, minDelay: 4000, maxDelay: 7500 },
+      medium: { accuracy: 0.65, minDelay: 2200, maxDelay: 4500 },
+      hard: { accuracy: 0.88, minDelay: 600, maxDelay: 2000 },
+    },
+  },
+  {
+    name: "Drew Houston",
+    title: "CEO of Dropbox",
+    emoji: "☁️",
+    color: "#0061FF",
+    catchphrase: "Simplify everything possible.",
+    difficulty: {
+      easy: { accuracy: 0.30, minDelay: 5000, maxDelay: 8500 },
+      medium: { accuracy: 0.55, minDelay: 3000, maxDelay: 5500 },
+      hard: { accuracy: 0.75, minDelay: 1500, maxDelay: 3500 },
+    },
+  },
+  {
+    name: "Lisa Su",
+    title: "CEO of AMD",
+    emoji: "💎",
+    color: "#ED1C24",
+    catchphrase: "Innovation is about delivering what's next.",
+    difficulty: {
+      easy: { accuracy: 0.40, minDelay: 3500, maxDelay: 7000 },
+      medium: { accuracy: 0.65, minDelay: 2000, maxDelay: 4000 },
+      hard: { accuracy: 0.88, minDelay: 800, maxDelay: 2000 },
+    },
+  },
+  {
+    name: "Steve Ballmer",
+    title: "Former CEO of Microsoft",
+    emoji: "💪",
+    color: "#7FBA00",
+    catchphrase: "Developers! Developers! Developers!",
+    difficulty: {
+      easy: { accuracy: 0.25, minDelay: 6000, maxDelay: 10000 },
+      medium: { accuracy: 0.50, minDelay: 3500, maxDelay: 7000 },
+      hard: { accuracy: 0.70, minDelay: 2000, maxDelay: 4000 },
+    },
+  },
 ];
+
+/** Get all CEO names for UI display */
+export const CEO_NAMES = CEO_PERSONAS.map((c) => c.name);
 
 /** Get a random CEO persona */
 export function getRandomCeo(): CeoPersona {
