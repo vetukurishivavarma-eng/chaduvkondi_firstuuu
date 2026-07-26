@@ -192,6 +192,48 @@ export async function POST(
 
     const isCorrect = selectedChoice.isCorrect;
 
+    // ═══ DEDUPLICATION ═══
+    // Check if this question was already answered in this quiz attempt
+    // to prevent duplicate submissions (e.g. from timer + user click race)
+    const existingAnswer = await prisma.answerLog.findFirst({
+      where: { quizAttemptId: id, questionId },
+    });
+
+    if (existingAnswer) {
+      // Already answered — return the existing result without creating a duplicate
+      const existingMastery = await prisma.masteryScore.findUnique({
+        where: {
+          userId_conceptId: {
+            userId: session.id,
+            conceptId: question.conceptId,
+          },
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          isCorrect: existingAnswer.isCorrect,
+          explanation: question.explanation,
+          correctChoice: question.choices.find((c) => c.isCorrect)?.text || "",
+          conceptName: question.concept.name,
+          subDomain: question.concept.subDomain.name,
+          currentMastery: existingMastery?.score || 0,
+          difficultyAdjustment: 0,
+          remediation: existingAnswer.isCorrect ? null : question.concept.resources.map((r) => ({
+            id: r.id,
+            title: r.title,
+            description: r.description,
+            url: r.url,
+            type: r.type,
+          })),
+          moodReaction: { message: "Already answered this one! ✅", emoji: "⚡" },
+          nextReviewAt: await getNextReviewAt(session.id, question.conceptId),
+          duplicate: true,
+        },
+      });
+    }
+
     // Record the answer
     await prisma.answerLog.create({
       data: {

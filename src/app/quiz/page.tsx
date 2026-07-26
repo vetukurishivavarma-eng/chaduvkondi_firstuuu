@@ -87,6 +87,7 @@ function QuizContent() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [answeringState, setAnsweringState] = useState(false);
   const [error, setError] = useState("");
   const [startTime, setStartTime] = useState<number>(0);
   const [newPersonalBest, setNewPersonalBest] = useState<{
@@ -132,10 +133,8 @@ function QuizContent() {
 
   // Keep the ref updated with latest selectedChoice/quiz
   async function handleSpeedTestTimeUp() {
-    // Submit current answer without auto-advancing, then complete
-    if (selectedChoice && quiz) {
-      await submitAnswer(true);
-    }
+    // submitAnswer now has built-in dedup via submittedQuestionsRef
+    await submitAnswer(true);
     await completeQuiz();
   }
 
@@ -191,6 +190,9 @@ function QuizContent() {
       setSelectedChoice(null);
       setShowFeedback(false);
       setStartTime(Date.now());
+      submittedQuestionsRef.current = new Set();
+      submittingRef.current = false;
+      setAnsweringState(false);
       if (quizType === "speed_test") {
         setTimeLeft(SPEED_TEST_DURATION);
       }
@@ -201,10 +203,22 @@ function QuizContent() {
     }
   }
 
+  // Guard refs to prevent concurrent / duplicate submissions
+  const submittingRef = useRef(false);
+  const submittedQuestionsRef = useRef(new Set<string>());
+
   async function submitAnswer(skipAdvance = false) {
-    if (!selectedChoice || !quiz) return;
+    // Prevent concurrent submissions: if a submission is already in flight, skip
+    if (submittingRef.current || !selectedChoice || !quiz) return;
 
     const question = quiz.questions[currentQuestion];
+    // Prevent duplicate submission of the same question (timer + user click race)
+    if (submittedQuestionsRef.current.has(question.id)) return;
+    submittedQuestionsRef.current.add(question.id);
+
+    submittingRef.current = true;
+    setAnsweringState(true);
+
     const timeOnQuestion = Math.floor((Date.now() - startTime) / 1000);
     const isSpeedTest = quiz.type === "speed_test";
 
@@ -272,6 +286,9 @@ function QuizContent() {
           setStartTime(Date.now());
         }, 150);
       }
+    } finally {
+      submittingRef.current = false;
+      setAnsweringState(false);
     }
   }
 
@@ -479,8 +496,12 @@ function QuizContent() {
   }
 
   if (phase === "results" && quiz) {
-    const correctCount = answers.filter((a) => a.isCorrect).length;
-    const totalAnswered = answers.length;
+    // Deduplicate answers by questionId to prevent duplicates from inflating counts
+    const uniqueAnswers = answers.filter(
+      (a, i, arr) => arr.findIndex((x) => x.questionId === a.questionId) === i
+    );
+    const correctCount = uniqueAnswers.filter((a) => a.isCorrect).length;
+    const totalAnswered = uniqueAnswers.length;
     const score =
       totalAnswered > 0
         ? Math.round((correctCount / totalAnswered) * 100)
@@ -929,10 +950,10 @@ function QuizContent() {
           <>
             <Button
               onClick={() => submitAnswer()}
-              disabled={!selectedChoice || completing}
+              disabled={!selectedChoice || completing || answeringState}
               className="flex-1 h-12 text-base gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 border-0"
             >
-              {completing ? (
+              {completing || answeringState ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
