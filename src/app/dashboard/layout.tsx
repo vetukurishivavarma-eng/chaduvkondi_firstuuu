@@ -25,6 +25,7 @@ import {
   Code2,
   Swords,
   Wand2,
+  Puzzle,
 } from "lucide-react";
 
 interface User {
@@ -54,6 +55,7 @@ const navItems = [
   { href: "/spaced-repetition", label: "Review", icon: RotateCcw },
   { href: "/roadmaps", label: "Roadmaps", icon: Map },
   { href: "/playground", label: "Playground", icon: Code2 },
+  { href: "/challenges", label: "Challenges", icon: Puzzle },
   { href: "/ai-tutor", label: "AI Tutor", icon: Wand2 },
   { href: "/battles", label: "Battles", icon: Swords },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },

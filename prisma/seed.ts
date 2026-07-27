@@ -1141,6 +1141,261 @@ await createTrack({
     });
     console.log("✅ Created spring season");
   } else console.log("✅ Season exists");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CODE CHALLENGES
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("\n🚀 Seeding code challenges...");
+
+  // Find concepts by name to link challenges to them
+  const concepts = await prisma.concept.findMany({
+    include: {
+      subDomain: {
+        include: { track: { select: { name: true } } },
+      },
+    },
+  });
+
+  const findConcept = (name: string): string | null => {
+    return concepts.find((c) => c.name === name)?.id || null;
+  };
+
+  const challengeData = [
+    // ── Python Challenges ──
+    {
+      title: "Reverse a String",
+      description: "Write a function `reverse_string(s)` that takes a string and returns it reversed.\n\nExample:\n- Input: \"hello\"\n- Output: \"olleh\"",
+      difficulty: "easy",
+      language: "python",
+      templateCode: "def reverse_string(s):\n    # Your code here\n    pass",
+      solutionCode: "def reverse_string(s):\n    return s[::-1]",
+      testCases: JSON.stringify([
+        { input: "\"hello\"", expected: "olleh", description: "Basic reversal" },
+        { input: "\"Python\"", expected: "nohtyP", description: "Capitalized word" },
+        { input: "\"a\"", expected: "a", description: "Single character" },
+        { input: "\"\"", expected: "", description: "Empty string" },
+      ]),
+      conceptName: "Variables & Data Types",
+      order: 1,
+    },
+    {
+      title: "Find the Maximum",
+      description: "Write a function `find_max(nums)` that takes a list of numbers and returns the largest number.\n\nExample:\n- Input: [3, 7, 2, 9, 1]\n- Output: 9",
+      difficulty: "easy",
+      language: "python",
+      templateCode: "def find_max(nums):\n    # Your code here\n    pass",
+      solutionCode: "def find_max(nums):\n    return max(nums) if nums else None",
+      testCases: JSON.stringify([
+        { input: "[3, 7, 2, 9, 1]", expected: "9", description: "Basic case" },
+        { input: "[-5, -2, -10, -1]", expected: "-1", description: "Negative numbers" },
+        { input: "[42]", expected: "42", description: "Single element" },
+        { input: "[1, 2, 3, 4, 5]", expected: "5", description: "Already sorted" },
+      ]),
+      conceptName: "Lists, Tuples & Dictionaries",
+      order: 2,
+    },
+    {
+      title: "FizzBuzz",
+      description: "Write a function `fizzbuzz(n)` that returns a list of strings from 1 to n.\n- For multiples of 3, use \"Fizz\" instead of the number\n- For multiples of 5, use \"Buzz\" instead of the number\n- For multiples of both, use \"FizzBuzz\"",
+      difficulty: "easy",
+      language: "python",
+      templateCode: "def fizzbuzz(n):\n    result = []\n    for i in range(1, n + 1):\n        # Your code here\n        pass\n    return result",
+      solutionCode: "def fizzbuzz(n):\n    result = []\n    for i in range(1, n + 1):\n        if i % 3 == 0 and i % 5 == 0:\n            result.append(\"FizzBuzz\")\n        elif i % 3 == 0:\n            result.append(\"Fizz\")\n        elif i % 5 == 0:\n            result.append(\"Buzz\")\n        else:\n            result.append(str(i))\n    return result",
+      testCases: JSON.stringify([
+        { input: "5", expected: "['1', '2', 'Fizz', '4', 'Buzz']", description: "n=5" },
+        { input: "15", expected: "['1', '2', 'Fizz', '4', 'Buzz', 'Fizz', '7', '8', 'Fizz', 'Buzz', '11', 'Fizz', '13', '14', 'FizzBuzz']", description: "n=15 with FizzBuzz" },
+      ]),
+      conceptName: "Control Flow & Functions",
+      order: 3,
+    },
+    {
+      title: "Palindrome Checker",
+      description: "Write a function `is_palindrome(s)` that checks if a string is a palindrome (reads the same forwards and backwards). Ignore case and spaces.\n\nExample:\n- Input: \"A man a plan a canal Panama\"\n- Output: True",
+      difficulty: "medium",
+      language: "python",
+      templateCode: "def is_palindrome(s):\n    # Your code here\n    pass",
+      solutionCode: "def is_palindrome(s):\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]",
+      testCases: JSON.stringify([
+        { input: "\"racecar\"", expected: "True", description: "Simple palindrome" },
+        { input: "\"hello\"", expected: "False", description: "Not a palindrome" },
+        { input: "\"A man a plan a canal Panama\"", expected: "True", description: "With spaces and case" },
+        { input: "\"\"", expected: "True", description: "Empty string" },
+      ]),
+      conceptName: "Lists, Tuples & Dictionaries",
+      order: 4,
+    },
+    {
+      title: "Two Sum",
+      description: "Write a function `two_sum(nums, target)` that finds two numbers in a list that add up to a target. Return their indices as a list.\n\nExample:\n- Input: nums = [2, 7, 11, 15], target = 9\n- Output: [0, 1] (because nums[0] + nums[1] = 9)",
+      difficulty: "medium",
+      language: "python",
+      templateCode: "def two_sum(nums, target):\n    # Your code here\n    pass",
+      solutionCode: "def two_sum(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []",
+      testCases: JSON.stringify([
+        { input: "[2, 7, 11, 15], 9", expected: "[0, 1]", description: "Basic case" },
+        { input: "[3, 2, 4], 6", expected: "[1, 2]", description: "Not first two" },
+        { input: "[3, 3], 6", expected: "[0, 1]", description: "Duplicate values" },
+      ]),
+      conceptName: "Lists, Tuples & Dictionaries",
+      order: 5,
+    },
+    {
+      title: "Anagram Detector",
+      description: "Write a function `is_anagram(s1, s2)` that checks if two strings are anagrams (contain the same letters in different order). Ignore case and spaces.\n\nExample:\n- Input: \"listen\", \"silent\"\n- Output: True",
+      difficulty: "medium",
+      language: "python",
+      templateCode: "def is_anagram(s1, s2):\n    # Your code here\n    pass",
+      solutionCode: "def is_anagram(s1, s2):\n    def clean(s): return sorted(s.lower().replace(' ', ''))\n    return clean(s1) == clean(s2)",
+      testCases: JSON.stringify([
+        { input: "\"listen\", \"silent\"", expected: "True", description: "Basic anagram" },
+        { input: "\"hello\", \"world\"", expected: "False", description: "Not an anagram" },
+        { input: "\"The Morse Code\", \"Here come dots\"", expected: "True", description: "Phrase anagram" },
+      ]),
+      conceptName: "Control Flow & Functions",
+      order: 6,
+    },
+    // ── JavaScript Challenges ──
+    {
+      title: "Reverse String (JS)",
+      description: "Write a function `reverseString(s)` that returns the string reversed.\n\nExample:\n- Input: \"hello\"\n- Output: \"olleh\"",
+      difficulty: "easy",
+      language: "javascript",
+      templateCode: "function reverseString(s) {\n    // Your code here\n}",
+      solutionCode: "function reverseString(s) {\n    return s.split('').reverse().join('');\n}",
+      testCases: JSON.stringify([
+        { input: "\"hello\"", expected: "olleh", description: "Basic reversal" },
+        { input: "\"JavaScript\"", expected: "tpircSavaJ", description: "Language name" },
+        { input: "\"a\"", expected: "a", description: "Single char" },
+      ]),
+      conceptName: "Variables & Types",
+      order: 1,
+    },
+    {
+      title: "Array Sum",
+      description: "Write a function `arraySum(arr)` that returns the sum of all numbers in an array.\n\nExample:\n- Input: [1, 2, 3, 4, 5]\n- Output: 15",
+      difficulty: "easy",
+      language: "javascript",
+      templateCode: "function arraySum(arr) {\n    // Your code here\n}",
+      solutionCode: "function arraySum(arr) {\n    return arr.reduce((sum, num) => sum + num, 0);\n}",
+      testCases: JSON.stringify([
+        { input: "[1, 2, 3, 4, 5]", expected: "15", description: "Basic sum" },
+        { input: "[-1, 0, 1]", expected: "0", description: "With negatives" },
+        { input: "[42]", expected: "42", description: "Single element" },
+        { input: "[]", expected: "0", description: "Empty array" },
+      ]),
+      conceptName: "Objects & Arrays",
+      order: 2,
+    },
+    {
+      title: "Count Vowels",
+      description: "Write a function `countVowels(str)` that returns the count of vowels (a, e, i, o, u) in a string, case-insensitive.\n\nExample:\n- Input: \"Hello World\"\n- Output: 3",
+      difficulty: "easy",
+      language: "javascript",
+      templateCode: "function countVowels(str) {\n    // Your code here\n}",
+      solutionCode: "function countVowels(str) {\n    return (str.match(/[aeiou]/gi) || []).length;\n}",
+      testCases: JSON.stringify([
+        { input: "\"Hello World\"", expected: "3", description: "Basic case" },
+        { input: "\"AEIOU\"", expected: "5", description: "All uppercase vowels" },
+        { input: "\"xyz\"", expected: "0", description: "No vowels" },
+        { input: "\"\"", expected: "0", description: "Empty string" },
+      ]),
+      conceptName: "Variables & Types",
+      order: 3,
+    },
+    // ── TypeScript Challenges ──
+    {
+      title: "Type-Safe Greeter",
+      description: "Write a function `greet(name, age)` that returns a greeting string. Use TypeScript types to define the parameters.\n\nExample:\n- Input: \"Alice\", 30\n- Output: \"Hello, Alice! You are 30 years old.\"",
+      difficulty: "easy",
+      language: "typescript",
+      templateCode: "function greet(name: string, age: number): string {\n    // Your code here\n    return '';\n}",
+      solutionCode: "function greet(name: string, age: number): string {\n    return `Hello, ${name}! You are ${age} years old.`;\n}",
+      testCases: JSON.stringify([
+        { input: "\"Alice\", 30", expected: "Hello, Alice! You are 30 years old.", description: "Basic greeting" },
+        { input: "\"Bob\", 25", expected: "Hello, Bob! You are 25 years old.", description: "Different name and age" },
+      ]),
+      conceptName: "TypeScript Fundamentals",
+      order: 1,
+    },
+    {
+      title: "Array Filter",
+      description: "Write a function `filterEven(arr)` that takes a number array and returns a new array with only even numbers. Use TypeScript types.\n\nExample:\n- Input: [1, 2, 3, 4, 5, 6]\n- Output: [2, 4, 6]",
+      difficulty: "easy",
+      language: "typescript",
+      templateCode: "function filterEven(arr: number[]): number[] {\n    // Your code here\n    return [];\n}",
+      solutionCode: "function filterEven(arr: number[]): number[] {\n    return arr.filter(n => n % 2 === 0);\n}",
+      testCases: JSON.stringify([
+        { input: "[1, 2, 3, 4, 5, 6]", expected: "[ 2, 4, 6 ]", description: "Basic filter" },
+        { input: "[1, 3, 5]", expected: "[ ]", description: "No evens" },
+        { input: "[2, 4, 6, 8]", expected: "[ 2, 4, 6, 8 ]", description: "All evens" },
+      ]),
+      conceptName: "TypeScript Fundamentals",
+      order: 2,
+    },
+    // ── Salesforce (Apex-style) Challenges (Python-based simulation) ──
+    {
+      title: "Account Record Filter",
+      description: "Write a function `filterActive(accounts)` that filters a list of account dictionaries to only include active accounts (isActive: true).\n\nEach account has: {name, isActive, revenue}\n\nExample:\n- Input: [{name: 'Acme', isActive: true, revenue: 1000}, {name: 'Inactive Corp', isActive: false, revenue: 500}]\n- Output: [{name: 'Acme', isActive: true, revenue: 1000}]",
+      difficulty: "medium",
+      language: "python",
+      templateCode: "def filter_active(accounts):\n    # Your code here\n    pass",
+      solutionCode: "def filter_active(accounts):\n    return [a for a in accounts if a.get('isActive')]",
+      testCases: JSON.stringify([
+        { input: "[{'name': 'Acme', 'isActive': True, 'revenue': 1000}, {'name': 'Test Corp', 'isActive': False, 'revenue': 500}]", expected: "[{'name': 'Acme', 'isActive': True, 'revenue': 1000}]", description: "Filter active accounts" },
+        { input: "[]", expected: "[]", description: "Empty list" },
+      ]),
+      conceptName: "Lists, Tuples & Dictionaries",
+      order: 7,
+    },
+    {
+      title: "String Compression",
+      description: "Write a function `compress(s)` that implements basic string compression using counts of repeated characters.\n\nExample:\n- Input: \"aabcccccaaa\"\n- Output: \"a2b1c5a3\"\n\nIf the compressed string is not smaller than the original, return the original.",
+      difficulty: "hard",
+      language: "python",
+      templateCode: "def compress(s):\n    # Your code here\n    pass",
+      solutionCode: "def compress(s):\n    if not s: return ''\n    compressed = []\n    count = 1\n    for i in range(1, len(s)):\n        if s[i] == s[i - 1]:\n            count += 1\n        else:\n            compressed.append(s[i - 1] + str(count))\n            count = 1\n    compressed.append(s[-1] + str(count))\n    result = ''.join(compressed)\n    return result if len(result) < len(s) else s",
+      testCases: JSON.stringify([
+        { input: "\"aabcccccaaa\"", expected: "a2b1c5a3", description: "Basic compression" },
+        { input: "\"abcdef\"", expected: "abcdef", description: "No compression needed" },
+        { input: "\"aabbcc\"", expected: "aabbcc", description: "Equal length" },
+      ]),
+      conceptName: "Control Flow & Functions",
+      order: 8,
+    },
+  ];
+
+  let challengeCount = 0;
+  for (const cd of challengeData) {
+    const conceptId = findConcept(cd.conceptName);
+    if (!conceptId) {
+      console.log(`  ⚠️ Concept "${cd.conceptName}" not found, skipping "${cd.title}"`);
+      continue;
+    }
+
+    const existing = await prisma.codeChallenge.findFirst({
+      where: { title: cd.title, conceptId },
+    });
+
+    if (!existing) {
+      await prisma.codeChallenge.create({
+        data: {
+          title: cd.title,
+          description: cd.description,
+          difficulty: cd.difficulty,
+          language: cd.language,
+          templateCode: cd.templateCode,
+          solutionCode: cd.solutionCode,
+          testCases: cd.testCases,
+          conceptId,
+          order: cd.order,
+          isActive: true,
+        },
+      });
+      challengeCount++;
+      console.log(`  ➕ Code Challenge: ${cd.title} (${cd.difficulty}, ${cd.language})`);
+    }
+  }
+  console.log(`✅ ${challengeCount} code challenges created (${challengeData.length - challengeCount} already existed)`);
 }
 
 main()
