@@ -1362,6 +1362,624 @@ await createTrack({
       conceptName: "Control Flow & Functions",
       order: 8,
     },
+
+    // ─── Java Challenges (MNC Interview Scenario-based) ───────────────────
+    {
+      title: "Employee Salary Calculator",
+      description: `**Scenario:** An MNC needs to calculate employee net annual salary. Write a static method that takes monthly salary as input and returns the in-hand annual salary after tax deduction (20% tax if annual > 5L, else 10%).
+
+**Example:** monthly=50000 → annual=600000, tax=120000, in-hand=480000`,
+      difficulty: "easy",
+      language: "java",
+      templateCode: `class Solution {
+    public static double calculateInHandSalary(double monthlySalary) {
+        // Your code here
+        // Calculate annual salary (monthly * 12)
+        // Apply 20% tax if annual > 500000, else 10%
+        // Return in-hand (annual - tax)
+    }
+}`,
+      solutionCode: `class Solution {
+    public static double calculateInHandSalary(double monthlySalary) {
+        double annual = monthlySalary * 12;
+        double tax = annual > 500000 ? annual * 0.2 : annual * 0.1;
+        return annual - tax;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "50000", expected: "480000.0", description: "50k monthly, above 5L annual, 20% tax" },
+        { input: "30000", expected: "324000.0", description: "30k monthly, below 5L annual, 10% tax" },
+        { input: "100000", expected: "960000.0", description: "1L monthly, high earner" },
+        { input: "20000", expected: "216000.0", description: "20k monthly, just below 5L" },
+      ]),
+      conceptName: "Classes & Inheritance",
+      order: 9,
+    },
+    {
+      title: "Valid Anagram Checker",
+      description: `**Scenario:** Amazon/Microsoft interview question — Two strings are anagrams if they contain the same characters with same frequency (case-insensitive, ignore spaces).
+
+**Example:** isAnagram("listen", "silent") → true, isAnagram("hello", "world") → false`,
+      difficulty: "easy",
+      language: "java",
+      templateCode: `class Solution {
+    public static boolean isAnagram(String s1, String s2) {
+        // Your code here
+        // Ignore case and spaces, check character frequency
+    }
+}`,
+      solutionCode: `class Solution {
+    public static boolean isAnagram(String s1, String s2) {
+        s1 = s1.toLowerCase().replaceAll(" ", "");
+        s2 = s2.toLowerCase().replaceAll(" ", "");
+        if (s1.length() != s2.length()) return false;
+        int[] count = new int[26];
+        for (int i = 0; i < s1.length(); i++) {
+            count[s1.charAt(i) - 'a']++;
+            count[s2.charAt(i) - 'a']--;
+        }
+        for (int c : count) if (c != 0) return false;
+        return true;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"listen\", \"silent\"", expected: "true", description: "Basic anagram pair" },
+        { input: "\"hello\", \"world\"", expected: "false", description: "Non-anagram pair" },
+        { input: "\"Dormitory\", \"dirty room\"", expected: "true", description: "Case-insensitive with spaces" },
+        { input: "\"a\", \"a\"", expected: "true", description: "Single character" },
+      ]),
+      conceptName: "Arrays & Strings",
+      order: 10,
+    },
+    {
+      title: "Bank Transaction Validator",
+      description: `**Scenario:** HCL/TechM banking project — Validate bank withdrawals. Write a static method that takes account type, current balance, and withdrawal amount, then returns whether the transaction is allowed. Savings accounts require min balance 5000, current accounts allow overdraft up to 25000.
+
+**Example:** canWithdraw("Savings", 10000, 7000) → false (would drop below min balance 5000)`,
+      difficulty: "medium",
+      language: "java",
+      templateCode: `class Solution {
+    public static boolean canWithdraw(String accountType, double balance, double amount) {
+        // Your code here
+        // Savings: balance - amount >= 5000
+        // Current: balance - amount >= -25000
+    }
+}`,
+      solutionCode: `class Solution {
+    public static boolean canWithdraw(String accountType, double balance, double amount) {
+        if (amount <= 0) return false;
+        if (accountType.equals("Savings")) {
+            return balance - amount >= 5000;
+        } else if (accountType.equals("Current")) {
+            return balance - amount >= -25000;
+        }
+        return false;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"Savings\", 10000, 7000", expected: "false", description: "Savings withdrawal below min balance 5000" },
+        { input: "\"Savings\", 10000, 3000", expected: "true", description: "Savings valid withdrawal (balance stays 7000)" },
+        { input: "\"Current\", 5000, 30000", expected: "true", description: "Current account within overdraft limit" },
+        { input: "\"Current\", 1000, 40000", expected: "false", description: "Current account exceeding overdraft limit" },
+        { input: "\"Savings\", 5000, 5000", expected: "false", description: "Savings at exact min balance, can't withdraw" },
+      ]),
+      conceptName: "Classes & Inheritance",
+      order: 11,
+    },
+    {
+      title: "Student Grade Calculator",
+      description: `**Scenario:** Infosys campus system — Given an array of student marks, find the highest scorer and class average. Write a method that takes a comma-separated marks string (multiple students separated by semicolons, each with comma-separated subject marks) and returns the top student's total and the class average.
+
+**Example:** marksStr="85,90,80;70,75,72" → "Top:255,Avg:80.83"`,
+      difficulty: "medium",
+      language: "java",
+      templateCode: `class Solution {
+    public static String calculateGrades(String marksStr) {
+        // Your code here
+        // Format: "85,90,80;70,75,72" where ; separates students, , separates subjects
+        // Return: "Top:{maxTotal},Avg:{average}"
+    }
+}`,
+      solutionCode: `class Solution {
+    public static String calculateGrades(String marksStr) {
+        String[] students = marksStr.split(";");
+        int maxTotal = -1;
+        int sumAll = 0;
+        int countAll = 0;
+        
+        for (String student : students) {
+            String[] marks = student.split(",");
+            int total = 0;
+            for (String m : marks) {
+                total += Integer.parseInt(m.trim());
+            }
+            if (total > maxTotal) maxTotal = total;
+            sumAll += total;
+            countAll += marks.length;
+        }
+        double avg = Math.round((double) sumAll / countAll * 100.0) / 100.0;
+        return "Top:" + maxTotal + ",Avg:" + avg;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"85,90,80;70,75,72\"", expected: "Top:255,Avg:80.83", description: "Two students with 3 subjects each" },
+        { input: "\"95,89,91;88,92,85;70,68,75\"", expected: "Top:275,Avg:83.67", description: "Three students, Jane tops with 275" },
+        { input: "\"60,70,80\"", expected: "Top:210,Avg:70.0", description: "Single student with 3 subjects" },
+      ]),
+      conceptName: "Collections Framework",
+      order: 12,
+    },
+    {
+      title: "Library Book Lending",
+      description: `**Scenario:** Wipro library management — Manage book borrowing with a fixed-size catalog. Implement a method that processes a series of commands:
+- ADD:title → adds book (available)
+- BORROW:title → borrows if available, throws error if not
+- RETURN:title → returns the book
+
+Returns the final status message or error description.
+
+**Example:** processLibrary("ADD:Java Basics,BORROW:Java Basics") → "Borrowed: Java Basics"`,
+      difficulty: "medium",
+      language: "java",
+      templateCode: `import java.util.*;
+
+class Solution {
+    public static String processLibrary(String commands) {
+        // Your code here
+        // Commands format: "ADD:title1,BORROW:title2,..." (comma separated)
+        // Returns final status or error message
+    }
+}`,
+      solutionCode: `import java.util.*;
+
+class Solution {
+    public static String processLibrary(String commands) {
+        Map<String, Boolean> books = new HashMap<>();
+        String[] cmds = commands.split(",");
+        String result = "";
+        
+        for (String cmd : cmds) {
+            String[] parts = cmd.split(":", 2);
+            String action = parts[0].trim();
+            String title = parts[1].trim();
+            
+            if (action.equals("ADD")) {
+                books.put(title, true);
+                result = "Added: " + title;
+            } else if (action.equals("BORROW")) {
+                if (!books.containsKey(title)) return "BookNotFoundException: " + title;
+                if (!books.get(title)) return "BookNotAvailableException: " + title;
+                books.put(title, false);
+                result = "Borrowed: " + title;
+            } else if (action.equals("RETURN")) {
+                if (!books.containsKey(title)) return "BookNotFoundException: " + title;
+                books.put(title, true);
+                result = "Returned: " + title;
+            }
+        }
+        return result;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"ADD:Java Basics,BORROW:Java Basics\"", expected: "Borrowed: Java Basics", description: "Add and borrow existing book" },
+        { input: "\"ADD:Clean Code,BORROW:Clean Code,BORROW:Clean Code\"", expected: "BookNotAvailableException: Clean Code", description: "Borrow already borrowed book" },
+        { input: "\"BORROW:Unknown Book\"", expected: "BookNotFoundException: Unknown Book", description: "Borrow non-existent book" },
+        { input: "\"ADD:DS Algo,BORROW:DS Algo,RETURN:DS Algo,BORROW:DS Algo\"", expected: "Borrowed: DS Algo", description: "Full borrow-return-borrow cycle" },
+      ]),
+      conceptName: "Exception Handling",
+      order: 13,
+    },
+    {
+      title: "Employee Stream Processor",
+      description: `**Scenario:** TCS HR analytics — Given employee data as a string (format: "name,dept,salary;name,dept,simplified"), process using Java streams to: count employees above 60k salary and find the highest earning department name.
+
+**Example:** emps="Ravi,IT,75000;Priya,HR,65000;Amit,IT,90000;Sita,HR,55000" → "Count:3,TopDept:IT"`,
+      difficulty: "medium",
+      language: "java",
+      templateCode: `import java.util.*;
+import java.util.stream.*;
+
+class Solution {
+    public static String analyzeEmployees(String data) {
+        // Your code here
+        // Format: "name,dept,salary;name,dept,salary"
+        // Return: "Count:{above60k},TopDept:{deptName}"
+    }
+}`,
+      solutionCode: `import java.util.*;
+import java.util.stream.*;
+
+class Solution {
+    public static String analyzeEmployees(String data) {
+        if (data.isEmpty()) return "Count:0,TopDept:";
+        
+        List<String[]> emps = Arrays.stream(data.split(";"))
+            .map(s -> s.split(","))
+            .collect(Collectors.toList());
+        
+        long countAbove60k = emps.stream()
+            .filter(e -> Double.parseDouble(e[2]) > 60000)
+            .count();
+        
+        String topDept = emps.stream()
+            .collect(Collectors.groupingBy(
+                e -> e[1],
+                Collectors.summingDouble(e -> Double.parseDouble(e[2]))
+            ))
+            .entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse("");
+        
+        return "Count:" + countAbove60k + ",TopDept:" + topDept;
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"Ravi,IT,75000;Priya,HR,65000;Amit,IT,90000;Sita,HR,55000\"", expected: "Count:3,TopDept:IT", description: "4 employees, 3 above 60k, IT has highest total salary" },
+        { input: "\"John,IT,45000;Jane,HR,30000\"", expected: "Count:0,TopDept:IT", description: "All below 60k, IT still highest dept" },
+        { input: "\"A,IT,100000;B,HR,80000;C,IT,95000\"", expected: "Count:3,TopDept:IT", description: "All above 60k, IT wins with 195000 total" },
+        { input: "\"\"", expected: "Count:0,TopDept:", description: "Empty input" },
+      ]),
+      conceptName: "Generics & Streams",
+      order: 14,
+    },
+    {
+      title: "Shopping Cart Calculator",
+      description: `**Scenario:** Amazon/Flipkart cart system — Given a list of item prices as comma-separated values, apply a discount percentage and GST (18%). Write a method that returns the final payable amount.
+
+**Example:** items="75000,1500" discount=10 → subtotal=76500, after 10% off=68850, +18% GST=81243`,
+      difficulty: "hard",
+      language: "java",
+      templateCode: `class Solution {
+    public static double calculateCartTotal(String itemsStr, double discountPercent) {
+        // Your code here
+        // itemsStr: comma-separated item prices, e.g., "75000,1500"
+        // Calculate: subtotal -> apply discount -> add 18% GST
+    }
+}`,
+      solutionCode: `class Solution {
+    public static double calculateCartTotal(String itemsStr, double discountPercent) {
+        if (itemsStr.isEmpty()) return 0.0;
+        
+        String[] parts = itemsStr.split(",");
+        double subtotal = 0.0;
+        for (String p : parts) {
+            subtotal += Double.parseDouble(p.trim());
+        }
+        double afterDiscount = subtotal - (subtotal * discountPercent / 100);
+        return afterDiscount + (afterDiscount * 0.18);
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"75000,1500\", 10", expected: "90153.0", description: "Laptop(75000)+Mouse(1500), 10% off + GST" },
+        { input: "\"500,50,2000\", 15", expected: "2507.55", description: "Book+Pen+Bag, 15% off + GST" },
+        { input: "\"30000\", 20", expected: "28320.0", description: "Single item(30000), 20% off + GST" },
+        { input: "\"\", 0", expected: "0.0", description: "Empty cart" },
+      ]),
+      conceptName: "Collections Framework",
+      order: 15,
+    },
+    {
+      title: "Product Catalog Search",
+      description: `**Scenario:** Build a product catalog search (Spring Boot style). Given a semicolon-separated product list (format: "name,category,price;...") and a search category, return the products in that category sorted by price ascending, as a comma-separated string of names.
+
+**Example:** catalog="iPhone,Electronics,99999;Laptop,Electronics,75000;Chair,Furniture,5000" search=Electronics → "Laptop,iPhone"`,
+      difficulty: "hard",
+      language: "java",
+      templateCode: `import java.util.*;
+import java.util.stream.*;
+
+class Solution {
+    public static String searchByCategory(String catalog, String category) {
+        // Your code here
+        // Format: "name,category,price;name,category,price"
+        // Return: comma-separated product names sorted by price ascending
+    }
+}`,
+      solutionCode: `import java.util.*;
+import java.util.stream.*;
+
+class Solution {
+    public static String searchByCategory(String catalog, String category) {
+        if (catalog.isEmpty()) return "";
+        
+        return Arrays.stream(catalog.split(";"))
+            .map(s -> s.split(","))
+            .filter(p -> p.length >= 3 && p[1].equals(category))
+            .sorted(Comparator.comparingDouble(p -> Double.parseDouble(p[2])))
+            .map(p -> p[0])
+            .collect(Collectors.joining(","));
+    }
+}`,
+      testCases: JSON.stringify([
+        { input: "\"iPhone,Electronics,99999;Laptop,Electronics,75000;Chair,Furniture,5000\", \"Electronics\"", expected: "Laptop,iPhone", description: "2 electronics sorted by price" },
+        { input: "\"Table,Books,3000;Pen,Books,100\", \"Books\"", expected: "Pen,Table", description: "Books category sorted by price" },
+        { input: "\"A,IT,1000;B,HR,2000\", \"IT\"", expected: "A", description: "Single matching product" },
+        { input: "\"\", \"Any\"", expected: "", description: "Empty catalog" },
+      ]),
+      conceptName: "Spring Boot Basics",
+      order: 16,
+    },
+
+    // ─── Angular Challenges (TypeScript/MNC Interview Scenario-based) ──────
+    {
+      title: "User Profile Card Renderer",
+      description: `**Scenario:** Build a user profile card renderer. Given a user object with name, email, and role, return an HTML string where the role badge color is:
+- "Admin" → red
+- "Editor" → blue
+- "Viewer" → gray
+- other → gray
+
+**Example:** renderProfileCard({name:"Alice",email:"a@b.com",role:"Admin"}) → HTML string with red Admin badge`,
+      difficulty: "easy",
+      language: "typescript",
+      templateCode: `interface UserData {
+    name: string;
+    email: string;
+    role: string;
+}
+
+function renderProfileCard(user: UserData): string {
+    // Return HTML string: <div class='card'><h3>{name}</h3><p>{email}</p><span style='background:{color}'>{role}</span></div>
+    // Map role to color: Admin→red, Editor→blue, default→gray
+}`,
+      solutionCode: `interface UserData {
+    name: string;
+    email: string;
+    role: string;
+}
+
+function renderProfileCard(user: UserData): string {
+    const colors: Record<string, string> = {
+        'Admin': 'red', 'Editor': 'blue'
+    };
+    const color = colors[user.role] || 'gray';
+    return \`<div class='card'><h3>\${user.name}</h3><p>\${user.email}</p><span style='background:\${color}'>\${user.role}</span></div>\`;
+}`,
+      testCases: JSON.stringify([
+        { input: "{name:'Alice',email:'a@b.com',role:'Admin'}", expected: "red", description: "Admin role gets red badge" },
+        { input: "{name:'Bob',email:'b@c.com',role:'Editor'}", expected: "blue", description: "Editor role gets blue badge" },
+        { input: "{name:'Charlie',email:'c@d.com',role:'Viewer'}", expected: "gray", description: "Viewer role defaults to gray" },
+        { input: "{name:'Dave',email:'d@e.com',role:'Unknown'}", expected: "gray", description: "Unknown role defaults to gray" },
+      ]),
+      conceptName: "Components & Modules",
+      order: 17,
+    },
+    {
+      title: "Shopping List Manager",
+      description: `**Scenario:** Manage a shopping list with add, remove, toggle purchased, and count remaining. Given a list of commands as a string, return the final unpurchased item count.
+
+Commands: "ADD:item;REMOVE:index;TOGGLE:index"
+
+**Example:** "ADD:Milk;ADD:Bread;TOGGLE:0" → remaining unpurchased count is 0`,
+      difficulty: "easy",
+      language: "typescript",
+      templateCode: `function processShoppingList(commands: string): number {
+    // Commands: "ADD:Milk;ADD:Bread;TOGGLE:0"
+    // Return: count of unpurchased items after all commands
+}`,
+      solutionCode: `function processShoppingList(commands: string): number {
+    const items: { name: string; purchased: boolean }[] = [];
+    if (!commands) return 0;
+    
+    for (const cmd of commands.split(";")) {
+        const [action, rest] = [cmd.split(":")[0], cmd.split(":").slice(1).join(":")];
+        if (action === "ADD") {
+            items.push({ name: rest, purchased: false });
+        } else if (action === "TOGGLE") {
+            const idx = parseInt(rest);
+            if (items[idx]) items[idx].purchased = !items[idx].purchased;
+        } else if (action === "REMOVE") {
+            const idx = parseInt(rest);
+            items.splice(idx, 1);
+        }
+    }
+    return items.filter(i => !i.purchased).length;
+}`,
+      testCases: JSON.stringify([
+        { input: "\"ADD:Milk;ADD:Bread;TOGGLE:0\"", expected: "0", description: "Add 2 items, toggle first, remaining count 0" },
+        { input: "\"ADD:Eggs;TOGGLE:0\"", expected: "0", description: "Add 1 item, toggle it, remaining count 0" },
+        { input: "\"ADD:A;ADD:B;ADD:C;REMOVE:1\"", expected: "2", description: "Add 3, remove second, remaining count 2" },
+        { input: "\"\"", expected: "0", description: "No commands" },
+      ]),
+      conceptName: "Services & Dependency Injection",
+      order: 18,
+    },
+    {
+      title: "Product Search Filter",
+      description: `**Scenario:** E-commerce product search. Given an array of product names and a search query, return products matching the query sorted by relevance (exact match first, then startsWith, then includes). Case-insensitive.
+
+**Example:** searchProducts(["Phone","Laptop","Tablet","Headphones"], "ph") → ["Phone","Headphones"]`,
+      difficulty: "medium",
+      language: "typescript",
+      templateCode: `function searchProducts(products: string[], query: string): string[] {
+    // Sort: exact match first, then startsWith, then includes
+    // Case-insensitive
+    // Return empty array for empty query
+}`,
+      solutionCode: `function searchProducts(products: string[], query: string): string[] {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase();
+    const matched = products.filter(p => p.toLowerCase().includes(q));
+    return matched.sort((a, b) => {
+        const al = a.toLowerCase();
+        const bl = b.toLowerCase();
+        if (al === q) return -1;
+        if (bl === q) return 1;
+        if (al.startsWith(q)) return -1;
+        if (bl.startsWith(q)) return 1;
+        return 0;
+    });
+}`,
+      testCases: JSON.stringify([
+        { input: "[\"Phone\",\"Laptop\",\"Tablet\",\"Headphones\"], \"ph\"", expected: "Phone,Headphones", description: "Search 'ph' returns Phone and Headphones" },
+        { input: "[\"Apple\",\"Banana\",\"Avocado\",\"Grape\"], \"ap\"", expected: "Apple,Avocado,Grape", description: "Search 'ap' returns 'ap' matches" },
+        { input: "[\"Dog\",\"Cat\",\"Bird\"], \"\"", expected: "", description: "Empty query returns empty" },
+        { input: "[\"React\",\"Angular\",\"Vue\"], \"Angular\"", expected: "Angular", description: "Exact match returns first" },
+        { input: "[\"cat\",\"caterpillar\",\"catalog\"], \"cat\"", expected: "cat,catalog,caterpillar", description: "Sort by relevance: exact, startsWith, includes" },
+      ]),
+      conceptName: "RxJS Observables & Operators",
+      order: 19,
+    },
+    {
+      title: "Registration Form Validator",
+      description: `**Scenario:** Validate a registration form. Return an object with field names as keys and error messages as values for invalid fields. Check:
+- Email must contain @ and .
+- Password: min 8 chars, 1 uppercase, 1 digit
+- Confirm password must match
+
+**Example:** validate("john@test.com", "Pass1234", "Pass1234") → {} (empty = valid)`,
+      difficulty: "medium",
+      language: "typescript",
+      templateCode: `function validateRegistration(email: string, password: string, confirmPassword: string): Record<string, string> {
+    // Return {} if valid, or { fieldName: errorMessage }
+}`,
+      solutionCode: `function validateRegistration(email: string, password: string, confirmPassword: string): Record<string, string> {
+    const errors: Record<string, string> = {};
+
+    if (!email.includes('@') || !email.includes('.')) {
+        errors.email = "Invalid email format";
+    }
+
+    const pwdIssues: string[] = [];
+    if (password.length < 8) pwdIssues.push("min 8 chars");
+    if (!/[A-Z]/.test(password)) pwdIssues.push("1 uppercase");
+    if (!/[0-9]/.test(password)) pwdIssues.push("1 digit");
+    if (pwdIssues.length > 0) {
+        errors.password = "Password needs: " + pwdIssues.join(", ");
+    }
+
+    if (password !== confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+    }
+
+    return errors;
+}`,
+      testCases: JSON.stringify([
+        { input: "\"john@test.com\", \"Pass1234\", \"Pass1234\"", expected: "{}", description: "Valid registration, no errors" },
+        { input: "\"invalid\", \"weak\", \"weak\"", expected: "email,password", description: "Invalid email and weak password" },
+        { input: "\"john@test.com\", \"StrongPass1\", \"WrongPass\"", expected: "confirmPassword", description: "Passwords do not match" },
+        { input: "\"noatsymbol\", \"Test1234\", \"Test1234\"", expected: "email", description: "Invalid email format" },
+      ]),
+      conceptName: "Forms & Testing",
+      order: 20,
+    },
+    {
+      title: "Employee Directory Router",
+      description: `**Scenario:** Accenture employee portal. Given employee data in pipe-delimited format "id|name|dept;id|name|dept" and an employee ID, return the employee's name and department ("name|dept") or "not found".
+
+**Example:** getEmployee("1|Ravi|IT;2|Priya|HR", 1) → "Ravi|IT"`,
+      difficulty: "medium",
+      language: "typescript",
+      templateCode: `function getEmployeeById(data: string, id: number): string {
+    // data format: "id|name|dept;id|name|dept"
+    // Return "name|dept" or "not found"
+}`,
+      solutionCode: `function getEmployeeById(data: string, id: number): string {
+    if (!data) return "not found";
+    const employees = data.split(";");
+    for (const emp of employees) {
+        const [eid, name, dept] = emp.split("|");
+        if (parseInt(eid) === id) {
+            return \`\${name}|\${dept}\`;
+        }
+    }
+    return "not found";
+}`,
+      testCases: JSON.stringify([
+        { input: "\"1|Ravi|IT;2|Priya|HR\", 1", expected: "Ravi|IT", description: "Get first employee by ID" },
+        { input: "\"1|Ravi|IT;2|Priya|HR\", 2", expected: "Priya|HR", description: "Get second employee by ID" },
+        { input: "\"1|A|Eng;2|B|HR;3|C|Eng\", 3", expected: "C|Eng", description: "Get third employee" },
+        { input: "\"1|X|Sales\", 99", expected: "not found", description: "Non-existent employee ID" },
+        { input: "\"\", 1", expected: "not found", description: "Empty data string" },
+      ]),
+      conceptName: "Routing & Navigation",
+      order: 21,
+    },
+    {
+      title: "Shopping Cart Engine",
+      description: `**Scenario:** Angular 17+ cart system using reactive state. Implement a shopping cart that:
+1. Adds items (id, name, price, quantity)
+2. Removes items by id
+3. Updates quantity
+4. Calculates total (price × qty for each)
+5. Applies promo codes: "SAVE10"=10% off, "SAVE20"=20% off
+
+Process a string of commands and return the final total.
+
+Commands: "ADD:id,name,price,qty;REMOVE:id;QTY:id,qty;PROMO:code;TOTAL"
+
+**Example:** "ADD:1,Laptop,75000,1;ADD:2,Mouse,1500,2;TOTAL" → 78000`,
+      difficulty: "hard",
+      language: "typescript",
+      templateCode: `interface CartItem {
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+}
+
+function processCart(commands: string): number {
+    // Process commands and return final total
+    // Commands: "ADD:1,Laptop,75000,1;REMOVE:1;QTY:1,3;PROMO:SAVE10;TOTAL"
+}`,
+      solutionCode: `interface CartItem {
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+}
+
+function processCart(commands: string): number {
+    let items: CartItem[] = [];
+    let promoCode: string | null = null;
+    const promos: Record<string, number> = { "SAVE10": 10, "SAVE20": 20 };
+
+    for (const cmd of commands.split(";")) {
+        const parts = cmd.split(":");
+        const action = parts[0];
+        const args = parts.slice(1).join(":");
+
+        if (action === "ADD") {
+            const [idStr, name, priceStr, qtyStr] = args.split(",");
+            const id = parseInt(idStr);
+            const existing = items.find(i => i.id === id);
+            if (existing) {
+                existing.quantity += parseInt(qtyStr);
+            } else {
+                items.push({ id, name, price: parseFloat(priceStr), quantity: parseInt(qtyStr) });
+            }
+        } else if (action === "REMOVE") {
+            items = items.filter(i => i.id !== parseInt(args));
+        } else if (action === "QTY") {
+            const [idStr, qtyStr] = args.split(",");
+            const qty = parseInt(qtyStr);
+            if (qty <= 0) {
+                items = items.filter(i => i.id !== parseInt(idStr));
+            } else {
+                const item = items.find(i => i.id === parseInt(idStr));
+                if (item) item.quantity = qty;
+            }
+        } else if (action === "PROMO") {
+            if (promos[args]) promoCode = args;
+        } else if (action === "TOTAL") {
+            const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const discount = promoCode ? (promos[promoCode] || 0) : 0;
+            return subtotal - (subtotal * discount / 100);
+        }
+    }
+    return 0;
+}`,
+      testCases: JSON.stringify([
+        { input: "\"ADD:1,Laptop,75000,1;ADD:2,Mouse,1500,2;TOTAL\"", expected: "78000", description: "Laptop + 2 Mice = 78000" },
+        { input: "\"ADD:1,Book,500,3;PROMO:SAVE10;TOTAL\"", expected: "1350", description: "3 books at 500 each with 10% off" },
+        { input: "\"ADD:1,Item,100,1;QTY:1,3;TOTAL\"", expected: "300", description: "Update quantity to 3, total goes to 300" },
+        { input: "\"ADD:1,Item,200,2;REMOVE:1;TOTAL\"", expected: "0", description: "Remove item, total is 0" },
+        { input: "\"ADD:1,Item,100,1;PROMO:INVALID;TOTAL\"", expected: "100", description: "Invalid promo code, no discount" },
+      ]),
+      conceptName: "NgRx & Signals",
+      order: 22,
+    },
   ];
 
   let challengeCount = 0;

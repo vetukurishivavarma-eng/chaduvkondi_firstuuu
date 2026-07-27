@@ -286,9 +286,22 @@ function wrapWithTestCase(
   userCode: string,
   testCase: { input: string; expected: string }
 ): string {
-  // Extract function name from template (assumes first function defined)
-  const funcMatch = templateCode.match(/(?:def|function|fn|fun)\s+(\w+)/);
-  const funcName = funcMatch ? funcMatch[1] : "solution";
+  // Extract function/method name from template
+  let funcName = "solution";
+  let className = "";
+
+  // Try Java method signature: public static retType methodName(params)
+  const javaMatch = templateCode.match(/public\s+static\s+\w+[<>]?\s+(\w+)\s*\(/);
+  if (javaMatch) {
+    funcName = javaMatch[1];
+    className = "Solution";
+  }
+
+  // Try Python/JS/TS function: def/function/fn/fun methodName(
+  if (!javaMatch) {
+    const funcMatch = templateCode.match(/(?:def|function|fn|fun)\s+(\w+)/);
+    if (funcMatch) funcName = funcMatch[1];
+  }
 
   switch (language) {
     case "python":
@@ -298,8 +311,10 @@ function wrapWithTestCase(
     case "typescript":
       return `${userCode}\n\n// Test runner\nconst result = ${funcName}(${testCase.input});\nconsole.log(result);`;
 
-    case "java":
-      return `${userCode}\n\n// Test runner\npublic class Main {\n  public static void main(String[] args) {\n    System.out.println(${funcName}(${testCase.input}));\n  }\n}`;
+    case "java": {
+      const call = className ? `${className}.${funcName}(${testCase.input})` : `${funcName}(${testCase.input})`;
+      return `${userCode}\n\n// Test runner\npublic class Main {\n  public static void main(String[] args) {\n    System.out.println(${call});\n  }\n}`;
+    }
 
     case "rust":
       return `${userCode}\n\n// Test runner\nfn main() {\n  println!("{}", ${funcName}(${testCase.input}));\n}`;
