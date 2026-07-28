@@ -21,9 +21,14 @@ import {
   ChevronDown,
   Code2,
   Flame,
+  Building2,
+  Target,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 import StreakVisualization from "@/components/streak-visualization";
 import DailyChallenge from "@/components/daily-challenge";
+import Heatmap from "@/components/dashboard/heatmap";
 
 interface TrackProgress {
   id: string;
@@ -34,6 +39,37 @@ interface TrackProgress {
   conceptsMastered: number;
   totalConcepts: number;
   isActive: boolean;
+}
+
+interface CodingStats {
+  stats: {
+    totalSolved: number;
+    totalProblems: number;
+    totalSubmissions: number;
+    uniqueProblemsAttempted: number;
+    accepted: number;
+    accuracy: number;
+    codingStreak: number;
+  };
+  heatmap: Array<{ date: string; count: number; accepted: number }>;
+  weeklyActivity: Array<{ day: string; count: number; accepted: number }>;
+  companyProgress: Array<{
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+    solved: number;
+    total: number;
+    percentage: number;
+  }>;
+  topicMastery: Array<{
+    name: string;
+    slug: string;
+    icon: string;
+    color: string;
+    solved: number;
+    total: number;
+    percentage: number;
+  }>;
 }
 
 interface DashboardData {
@@ -88,6 +124,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
+  const [codingStats, setCodingStats] = useState<CodingStats | null>(null);
+  const [codingStatsLoading, setCodingStatsLoading] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => sessionStorage.getItem("avatarBannerDismissed") === "true"
   );
@@ -108,8 +146,19 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   };
 
+  const fetchCodingStats = () => {
+    setCodingStatsLoading(true);
+    fetch("/api/dashboard/coding-stats")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success) setCodingStats(res.data);
+      })
+      .finally(() => setCodingStatsLoading(false));
+  };
+
   useEffect(() => {
     fetchDashboard();
+    fetchCodingStats();
   }, []);
 
   function switchTrack(trackId: string) {
@@ -372,6 +421,40 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Coding Stats Summary */}
+        {codingStats && !codingStatsLoading && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-[var(--primary)]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Coding Interview</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                <p className="text-xs text-[var(--muted)]">Solved</p>
+                <p className="text-lg font-bold text-emerald-500">{codingStats.stats.totalSolved}<span className="text-xs font-normal text-[var(--muted)]">/{codingStats.stats.totalProblems}</span></p>
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                <p className="text-xs text-[var(--muted)]">Accuracy</p>
+                <p className="text-lg font-bold text-[var(--foreground)]">{codingStats.stats.accuracy}%</p>
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                <p className="text-xs text-[var(--muted)]">Attempted</p>
+                <p className="text-lg font-bold text-[var(--foreground)]">{codingStats.stats.uniqueProblemsAttempted}</p>
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                <p className="text-xs text-[var(--muted)]">Streak</p>
+                <p className="text-lg font-bold text-orange-500">{codingStats.stats.codingStreak}<span className="text-xs font-normal text-[var(--muted)]"> days</span></p>
+              </div>
+            </div>
+            <Link href="/problems">
+              <Button size="sm" variant="outline" className="w-full gap-1.5 text-xs">
+                <Code2 className="w-3.5 h-3.5" />
+                Browse Problems
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {/* Weak Concepts & Spaced Rep */}
         <div className="space-y-4">
           <Card>
@@ -420,6 +503,175 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* ═══════════ CODING DASHBOARD EXTRA SECTION ═══════════ */}
+      {codingStats && (
+        <>
+          {/* Heatmap Section */}
+          <Card className="glass">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                Coding Activity
+              </CardTitle>
+              <CardDescription>Problem-solving activity over the past year</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {codingStatsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <Heatmap data={codingStats.heatmap} />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Company-wise Progress + Topic Mastery */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Company Progress */}
+            <Card className="glass">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                  <Building2 className="w-4 h-4 text-[var(--secondary)]" />
+                  Company-wise Progress
+                </CardTitle>
+                <CardDescription>Problems solved by company</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {codingStatsLoading ? (
+                  <div className="flex justify-center py-6">
+                    <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : codingStats.companyProgress.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-center">
+                    <Building2 className="w-7 h-7 text-[var(--muted)]" />
+                    <p className="text-sm text-[var(--muted)]">Solve company-tagged problems to see progress</p>
+                    <Link href="/problems">
+                      <Button size="sm" variant="outline">Browse Problems</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {codingStats.companyProgress.slice(0, 8).map((company) => (
+                      <Link
+                        key={company.slug}
+                        href={`/problems?company=${company.slug}`}
+                        className="flex items-center gap-3 group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">
+                              {company.name}
+                            </span>
+                            <span className="text-[10px] text-[var(--muted)]">
+                              {company.solved}/{company.total}
+                            </span>
+                          </div>
+                          <div className="relative mt-1 h-1.5 rounded-full bg-[var(--soft)] overflow-hidden">
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${company.percentage}%`,
+                                background: `linear-gradient(90deg, var(--primary), var(--primary-light))`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium text-[var(--muted)] w-8 text-right">
+                          {company.percentage}%
+                        </span>
+                      </Link>
+                    ))}
+                    {codingStats.companyProgress.length > 8 && (
+                      <Link href="/problems" className="block text-center text-[10px] text-[var(--primary)] hover:text-[var(--primary-light)] transition-colors pt-1">
+                        View all {codingStats.companyProgress.length} companies
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Topic Mastery */}
+            <Card className="glass">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                  <Target className="w-4 h-4 text-purple-500" />
+                  Topic Mastery
+                </CardTitle>
+                <CardDescription>Your proficiency across topics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {codingStatsLoading ? (
+                  <div className="flex justify-center py-6">
+                    <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : codingStats.topicMastery.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-center">
+                    <Target className="w-7 h-7 text-[var(--muted)]" />
+                    <p className="text-sm text-[var(--muted)]">Solve topic-tagged problems to see mastery</p>
+                    <Link href="/problems">
+                      <Button size="sm" variant="outline">Browse Problems</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {codingStats.topicMastery.slice(0, 8).map((topic) => (
+                      <Link
+                        key={topic.slug}
+                        href={`/problems?topic=${topic.slug}`}
+                        className="flex items-center gap-3 group"
+                      >
+                        <span className="text-lg shrink-0">{topic.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">
+                              {topic.name}
+                            </span>
+                            <span className="text-[10px] text-[var(--muted)]">
+                              {topic.solved}/{topic.total}
+                            </span>
+                          </div>
+                          <div className="relative mt-1 h-2 rounded-full bg-[var(--soft)] overflow-hidden">
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${topic.percentage}%`,
+                                backgroundColor: topic.color || "var(--primary)",
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Award
+                            className="w-3.5 h-3.5"
+                            style={{
+                              color: topic.percentage >= 80 ? "#22c55e" : topic.percentage >= 50 ? "#f59e0b" : "#9c9a94",
+                            }}
+                          />
+                          <span className="text-[10px] font-medium"
+                            style={{
+                              color: topic.percentage >= 80 ? "#22c55e" : topic.percentage >= 50 ? "#f59e0b" : "var(--muted)",
+                            }}
+                          >
+                            {topic.percentage}%
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                    {codingStats.topicMastery.length > 8 && (
+                      <Link href="/problems" className="block text-center text-[10px] text-[var(--primary)] hover:text-[var(--primary-light)] transition-colors pt-1">
+                        View all {codingStats.topicMastery.length} topics
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
       {/* Recent Activity */}
       <Card>

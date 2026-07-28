@@ -47,6 +47,54 @@ enum BadgeCategory {
   special
 }
 
+enum ProblemDifficulty {
+  easy
+  medium
+  hard
+  expert
+}
+
+enum ProblemStatus {
+  draft
+  published
+  archived
+}
+
+enum InterviewType {
+  coding
+  mcq
+  sql
+  debugging
+  output_prediction
+  lld
+  system_design
+}
+
+enum InterviewStatus {
+  pending
+  in_progress
+  completed
+  evaluated
+}
+
+enum ContestStatus {
+  upcoming
+  active
+  completed
+}
+
+enum SubmissionStatus {
+  pending
+  compiling
+  running
+  accepted
+  wrong_answer
+  time_limit_exceeded
+  memory_limit_exceeded
+  runtime_error
+  compilation_error
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -87,6 +135,17 @@ model User {
   battleWins           Int        @default(0)
   battleLosses         Int        @default(0)
   battleDraws          Int        @default(0)
+
+  // Coding Interview Platform
+  authoredProblems     CodingProblem[]     @relation("ProblemAuthor")
+  approvedProblems     CodingProblem[]     @relation("ProblemApprover")
+  problemSubmissions   ProblemSubmission[]
+  problemBookmarks     ProblemBookmark[]
+  problemProgress      UserProblemProgress[]
+  mockInterviews       MockInterview[]
+  contestRegistrations ContestRegistration[]
+  contestRankings      ContestRanking[]
+  createdContests      Contest[]            @relation("ContestCreator")
 }
 
 model Track {
@@ -450,4 +509,332 @@ model UserSeasonScore {
   season  LeaderboardSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, seasonId])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CODING INTERVIEW PLATFORM — New Models (Phase 1)
+// ═══════════════════════════════════════════════════════════════════
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String   @default("")
+  logoUrl     String?
+  website     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  problems      CodingProblem[]
+  tags          CompanyTag[]
+  mockInterviews MockInterview[]
+}
+
+model ProgrammingLanguage {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  extension String   @default("")
+  monacoId  String   @default("")
+  judge0Id  Int?
+  pistonId  String   @default("")
+  icon      String   @default("\ud83d\udcc4")
+  color     String   @default("#6366f1")
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  problems    CodingProblem[]
+  submissions ProblemSubmission[]
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String   @default("")
+  icon        String   @default("\ud83d\udcda")
+  color       String   @default("#6366f1")
+  parentId    String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  parent   Topic?          @relation("TopicHierarchy", fields: [parentId], references: [id])
+  children Topic[]         @relation("TopicHierarchy")
+  problems CodingProblem[]
+  tags     CompanyTag[]
+}
+
+model CompanyTag {
+  id        String @id @default(cuid())
+  companyId String
+  topicId   String
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  topic   Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, topicId])
+}
+
+model CodingProblem {
+  id              String            @id @default(cuid())
+  title           String            @unique
+  slug            String            @unique
+  difficulty      ProblemDifficulty @default(easy)
+
+  story              String @default("")
+  problemStatement   String
+  inputFormat        String @default("")
+  outputFormat       String @default("")
+  constraints        String @default("")
+  examples           String @default("[]")
+  edgeCases          String @default("[]")
+  hints              String @default("[]")
+
+  bruteForceSolution  String @default("")
+  optimalSolution     String @default("")
+  complexityAnalysis  String @default("")
+  dryRun              String @default("")
+  flowDiagramUrl      String?
+  pseudoCode          String @default("")
+
+  solutionJava       String @default("")
+  solutionPython     String @default("")
+  solutionCpp        String @default("")
+  solutionC          String @default("")
+  solutionJavaScript String @default("")
+  solutionGo         String @default("")
+  solutionRust       String @default("")
+  solutionKotlin     String @default("")
+  solutionSwift      String @default("")
+  solutionPhp        String @default("")
+  solutionCsharp     String @default("")
+  solutionRuby       String @default("")
+  solutionTypescript String @default("")
+
+  interviewTips     String @default("")
+  commonMistakes    String @default("")
+
+  testCases          String @default("[]")
+  hiddenTestCases    String @default("[]")
+
+  tags              String        @default("[]")
+  totalSubmissions  Int           @default(0)
+  totalAccepted     Int           @default(0)
+  acceptanceRate    Float         @default(0.0)
+  isAiGenerated     Boolean       @default(false)
+  status            ProblemStatus @default(published)
+  upvotes           Int           @default(0)
+  downvotes         Int           @default(0)
+
+  authorId     String?
+  companyId    String?
+  languageId   String
+  topicId      String?
+  createdById  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User?               @relation("ProblemAuthor", fields: [authorId], references: [id])
+  company     Company?            @relation(fields: [companyId], references: [id])
+  language    ProgrammingLanguage @relation(fields: [languageId], references: [id])
+  topic       Topic?              @relation(fields: [topicId], references: [id])
+  createdBy   User?               @relation("ProblemApprover", fields: [createdById], references: [id])
+
+  submissions     ProblemSubmission[]
+  bookmarks       ProblemBookmark[]
+  userProgress    UserProblemProgress[]
+  interviewProblems InterviewProblem[]
+  contestProblems ContestProblem[]
+
+  @@index([difficulty])
+  @@index([companyId])
+  @@index([languageId])
+  @@index([topicId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ProblemSubmission {
+  id              String           @id @default(cuid())
+  userId          String
+  problemId       String
+  languageId      String
+  code            String
+  status          SubmissionStatus @default(pending)
+  testCasesPassed Int              @default(0)
+  totalTestCases  Int              @default(0)
+  executionTimeMs Int?
+  memoryUsedKb    Int?
+  errorMessage    String?
+  score           Float?
+  createdAt       DateTime         @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem  CodingProblem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  language ProgrammingLanguage @relation(fields: [languageId], references: [id])
+
+  @@index([userId, problemId])
+  @@index([problemId, status])
+  @@index([userId, createdAt])
+}
+
+model ProblemBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  problemId String
+  createdAt DateTime @default(now())
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem CodingProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+}
+
+model UserProblemProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  problemId    String
+  attempts     Int      @default(0)
+  solved       Boolean  @default(false)
+  lastSolvedAt DateTime?
+  bestCode     String   @default("")
+  bestScore    Float?
+  bookmarked   Boolean  @default(false)
+  notes        String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem CodingProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+}
+
+model MockInterview {
+  id              String          @id @default(cuid())
+  userId          String
+  title           String          @default("")
+  companyId       String?
+  experienceYears Float           @default(2)
+  durationMinutes Int             @default(60)
+  status          InterviewStatus @default(pending)
+  score           Float?
+  feedback        String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company?             @relation(fields: [companyId], references: [id])
+  problems  InterviewProblem[]
+  questions InterviewQuestion[]
+}
+
+model InterviewProblem {
+  id          String   @id @default(cuid())
+  interviewId String
+  problemId   String
+  order       Int      @default(0)
+  userCode    String   @default("")
+  score       Float?
+  feedback    String?
+  solved      Boolean  @default(false)
+
+  interview MockInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  problem   CodingProblem @relation(fields: [problemId], references: [id])
+}
+
+model InterviewQuestion {
+  id           String        @id @default(cuid())
+  interviewId  String
+  questionText String
+  type         InterviewType @default(mcq)
+  choices      String        @default("[]")
+  correctAnswer String       @default("")
+  userAnswer   String        @default("")
+  isCorrect    Boolean?
+  explanation  String        @default("")
+  score        Float?
+  order        Int           @default(0)
+
+  interview MockInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+}
+
+model Contest {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  duration    Int
+  status      ContestStatus @default(upcoming)
+  isVirtual   Boolean       @default(false)
+  rules       String        @default("")
+  prizes      String        @default("")
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdBy     User                  @relation("ContestCreator", fields: [createdById], references: [id])
+  problems      ContestProblem[]
+  registrations ContestRegistration[]
+  rankings      ContestRanking[]
+
+  @@index([status])
+  @@index([startTime])
+}
+
+model ContestProblem {
+  id         String @id @default(cuid())
+  contestId  String
+  problemId  String
+  order      Int    @default(0)
+  points     Int    @default(100)
+
+  contest Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem CodingProblem @relation(fields: [problemId], references: [id])
+
+  @@unique([contestId, problemId])
+}
+
+model ContestRegistration {
+  id        String   @id @default(cuid())
+  contestId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+}
+
+model ContestRanking {
+  id             String   @id @default(cuid())
+  contestId      String
+  userId         String
+  score          Int      @default(0)
+  rank           Int?
+  problemsSolved Int      @default(0)
+  totalTime      Int      @default(0)
+  finishedAt     DateTime?
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+}
+
+model AiGenerationLog {
+  id             String   @id @default(cuid())
+  prompt         String
+  response       String
+  model          String   @default("gpt-4")
+  tokensUsed     Int      @default(0)
+  generationType String   @default("problem")
+  createdAt      DateTime @default(now())
 }

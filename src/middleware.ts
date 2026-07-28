@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "chaduvkondi-super-secret-key-change-in-production";
 
-const protectedPaths = ["/dashboard", "/quiz", "/admin", "/leaderboard", "/onboarding", "/profile", "/spaced-repetition", "/roadmaps", "/playground", "/battles", "/ai-tutor", "/challenges", "/badges"];
+const protectedPaths = ["/dashboard", "/quiz", "/admin", "/leaderboard", "/onboarding", "/profile", "/spaced-repetition", "/roadmaps", "/playground", "/battles", "/ai-tutor", "/challenges", "/badges", "/problems", "/contests", "/interviews", "/companies", "/ai-generate"];
 const authPaths = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export async function middleware(request: NextRequest) {

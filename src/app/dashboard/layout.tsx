@@ -27,6 +27,9 @@ import {
   Wand2,
   Puzzle,
   Medal,
+  Terminal,
+  Users,
+  BarChart3,
 } from "lucide-react";
 
 interface User {
@@ -52,15 +55,19 @@ const MOOD_CONFIG: Record<string, { icon: string; label: string; color: string }
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/problems", label: "Problems", icon: Code2 },
   { href: "/quiz", label: "Quiz", icon: Brain },
   { href: "/spaced-repetition", label: "Review", icon: RotateCcw },
   { href: "/roadmaps", label: "Roadmaps", icon: Map },
-  { href: "/playground", label: "Playground", icon: Code2 },
+  { href: "/playground", label: "Playground", icon: Terminal },
   { href: "/challenges", label: "Challenges", icon: Puzzle },
+  { href: "/contests", label: "Contests", icon: Trophy },
+  { href: "/interviews", label: "Interviews", icon: Users },
   { href: "/badges", label: "Badges", icon: Medal },
   { href: "/ai-tutor", label: "AI Tutor", icon: Wand2 },
+  { href: "/ai-generate", label: "AI Generate", icon: Sparkles },
   { href: "/battles", label: "Battles", icon: Swords },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: Sparkles },
 ];
 
