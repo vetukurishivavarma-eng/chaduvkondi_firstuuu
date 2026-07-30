@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { CEO_PERSONAS } from "@/lib/ai-battle";
+import { CeoWallOfFame } from "@/components/ceo-wall-of-fame";
 import {
   Swords,
   Trophy,
@@ -505,6 +506,10 @@ export default function BattlesPage() {
               </Card>
             </div>
           )}
+
+          {/* CEO Wall of Fame */}          <div className="stagger-3 animate-fade-in-up">
+            <CeoWallOfFame />
+          </div>
 
           {/* CEO Stats Table */}
           <Card className="glass stagger-2 animate-fade-in-up">

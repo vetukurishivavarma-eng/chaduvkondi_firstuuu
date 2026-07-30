@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FocusMode } from "@/components/focus-mode";
 import {
   LayoutDashboard,
   Brain,
@@ -231,6 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className="lg:pl-60 pt-14 lg:pt-0">
         <main className="p-5 md:p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">{children}</main>
+        <FocusMode source="coding" />
       </div>
     </div>
   );

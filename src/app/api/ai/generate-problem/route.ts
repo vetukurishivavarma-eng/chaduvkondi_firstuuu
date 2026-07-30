@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateProblem, isOllamaAvailable } from "@/lib/ai-generator";
+import { generateProblem, isOllamaAvailable, getModelName } from "@/lib/ai-generator";
 import { successResponse, errorResponse, handleApiError } from "@/lib/api-helpers";
 
 export const runtime = "nodejs";
@@ -92,12 +92,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Determine the actual model used
+    const modelName = result.usedAi ? getModelName() : "fallback-template";
+
     // Log the AI generation
     await prisma.aiGenerationLog.create({
       data: {
         prompt: JSON.stringify({ difficulty, topic, company, language }),
         response: JSON.stringify({ title: problem.title, slug: problem.slug, usedAi: result.usedAi }),
-        model: result.usedAi ? "ollama/llama3" : "fallback-template",
+        model: modelName,
         tokensUsed: result.tokensUsed || 0,
         generationType: "problem",
       },
@@ -111,6 +114,10 @@ export async function POST(request: NextRequest) {
       status: created.status,
       isAiGenerated: created.isAiGenerated,
       ollamaAvailable,
+      modelName,
+      qualityScore: result.qualityScore?.total || null,
+      qualityBreakdown: result.qualityScore?.breakdown || null,
+      retriesAttempted: result.retriesAttempted || 0,
     });
   } catch (error) {
     console.error("AI generate problem error:", error);
@@ -128,10 +135,13 @@ export async function GET() {
 
     const available = await isOllamaAvailable();
 
+    const modelName = getModelName();
+
     return successResponse({
       ollamaAvailable: available,
+      modelName: available ? modelName : null,
       message: available
-        ? "Ollama is running and ready to generate problems."
+        ? `Ollama is running (${modelName}) and ready to generate problems.`
         : "Ollama is not running. Template-based fallback will be used.",
     });
   } catch (error) {

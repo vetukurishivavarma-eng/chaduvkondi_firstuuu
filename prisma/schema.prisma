@@ -681,6 +681,34 @@ model ProblemSubmission {
   @@index([userId, createdAt])
 }
 
+
+model CodeReview {
+  id              String   @id @default(cuid())
+  userId          String
+  problemId       String
+  submissionId    String   @unique
+  language        String
+  code            String
+  codeQuality     String
+  timeComplexity  String?
+  spaceComplexity String?
+  codePersonality String?
+  personalityDesc String?
+  strengths       String?
+  improvements    String?
+  alternativeApproach String?
+  overallFeedback String?
+  createdAt       DateTime @default(now())
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem    CodingProblem    @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  submission ProblemSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([codePersonality])
+}
+
 model ProblemBookmark {
   id        String   @id @default(cuid())
   userId    String
